@@ -20,7 +20,6 @@ htmlcov
 .idea
 .DS_Store
 
-tests
 docs
 *.md
 !README.md

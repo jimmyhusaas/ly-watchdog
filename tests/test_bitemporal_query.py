@@ -49,8 +49,8 @@ def test_current_state_predicate_is_minimal() -> None:
         Legislator.valid_to.is_(None),
         Legislator.superseded_at.is_(None),
     )
-    compiled = str(stmt.compile(compile_kwargs={"literal_binds": True}))
-    assert compiled.count("IS NULL") == 2
-    # valid_from / recorded_at should not appear in current-state query
-    assert "valid_from" not in compiled
-    assert "recorded_at" not in compiled
+    # Check only the WHERE clause — the SELECT list legitimately contains all columns
+    where_sql = str(stmt.whereclause.compile(compile_kwargs={"literal_binds": True}))
+    assert where_sql.count("IS NULL") == 2
+    assert "valid_from" not in where_sql
+    assert "recorded_at" not in where_sql
