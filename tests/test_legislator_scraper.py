@@ -51,20 +51,20 @@ async def test_upsert_insert(db_session) -> None:
     now = datetime(2024, 2, 1, tzinfo=UTC)
     result = await upsert_legislator(
         db_session,
-        uid="11_柯建銘",
+        uid="test_insert_a001",
         term=11,
-        name="柯建銘",
-        district="新竹市",
+        name="測試議員甲",
+        district="測試選區",
         party="民主進步黨",
         valid_from=now,
-        raw={"term": "11", "name": "柯建銘"},
+        raw={},
         now=now,
     )
     assert result == "inserted"
     await db_session.flush()
 
     rows = (await db_session.execute(
-        select(Legislator).where(Legislator.legislator_uid == "11_柯建銘")
+        select(Legislator).where(Legislator.legislator_uid == "test_insert_a001")
     )).scalars().all()
     assert len(rows) == 1
     assert rows[0].party == "民主進步黨"
@@ -76,10 +76,10 @@ async def test_upsert_unchanged(db_session) -> None:
     now = datetime(2024, 2, 1, tzinfo=UTC)
     await upsert_legislator(
         db_session,
-        uid="11_王世堅",
+        uid="test_unchanged_b001",
         term=11,
-        name="王世堅",
-        district="台北市第三選舉區",
+        name="測試議員乙",
+        district="測試選區二",
         party="民主進步黨",
         valid_from=now,
         raw={},
@@ -89,10 +89,10 @@ async def test_upsert_unchanged(db_session) -> None:
 
     result = await upsert_legislator(
         db_session,
-        uid="11_王世堅",
+        uid="test_unchanged_b001",
         term=11,
-        name="王世堅",
-        district="台北市第三選舉區",
+        name="測試議員乙",
+        district="測試選區二",
         party="民主進步黨",
         valid_from=now,
         raw={},
@@ -101,7 +101,7 @@ async def test_upsert_unchanged(db_session) -> None:
     assert result == "unchanged"
 
     rows = (await db_session.execute(
-        select(Legislator).where(Legislator.legislator_uid == "11_王世堅")
+        select(Legislator).where(Legislator.legislator_uid == "test_unchanged_b001")
     )).scalars().all()
     assert len(rows) == 1
 
@@ -113,9 +113,9 @@ async def test_upsert_party_change_supersedes(db_session) -> None:
 
     await upsert_legislator(
         db_session,
-        uid="11_某立委",
+        uid="test_party_change_c001",
         term=11,
-        name="某立委",
+        name="測試議員丙",
         district="不分區",
         party="台灣民眾黨",
         valid_from=t1,
@@ -126,9 +126,9 @@ async def test_upsert_party_change_supersedes(db_session) -> None:
 
     result = await upsert_legislator(
         db_session,
-        uid="11_某立委",
+        uid="test_party_change_c001",
         term=11,
-        name="某立委",
+        name="測試議員丙",
         district="不分區",
         party="無黨籍",
         valid_from=t1,
@@ -140,7 +140,7 @@ async def test_upsert_party_change_supersedes(db_session) -> None:
 
     rows = (await db_session.execute(
         select(Legislator)
-        .where(Legislator.legislator_uid == "11_某立委")
+        .where(Legislator.legislator_uid == "test_party_change_c001")
         .order_by(Legislator.recorded_at)
     )).scalars().all()
 
