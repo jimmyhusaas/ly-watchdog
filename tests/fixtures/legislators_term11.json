@@ -1,0 +1,69 @@
+{
+  "dataList": [
+    {
+      "term": "11",
+      "name": "柯建銘",
+      "ename": "KE JIAN-MING",
+      "sex": "男",
+      "party": "民主進步黨",
+      "partyGroup": "民主進步黨黨團",
+      "areaName": "新竹市",
+      "committee": "程序委員會",
+      "onboardDate": "113/02/01",
+      "degree": "國立臺灣大學法律學系",
+      "experience": "立法委員（第七、八、九、十、十一屆）"
+    },
+    {
+      "term": "11",
+      "name": "韓國瑜",
+      "ename": "HAN KUO-YU",
+      "sex": "男",
+      "party": "中國國民黨",
+      "partyGroup": "中國國民黨黨團",
+      "areaName": "不分區",
+      "committee": "立法院院長",
+      "onboardDate": "113/02/01",
+      "degree": "中國文化大學政治學系",
+      "experience": "高雄市長、立法委員"
+    },
+    {
+      "term": "11",
+      "name": "黃國昌",
+      "ename": "HUANG GUO-CHANG",
+      "sex": "男",
+      "party": "台灣民眾黨",
+      "partyGroup": "台灣民眾黨黨團",
+      "areaName": "不分區",
+      "committee": "司法及法制委員會",
+      "onboardDate": "113/02/01",
+      "degree": "國立臺灣大學法律學研究所博士",
+      "experience": "中研院法律所研究員、立法委員（第九屆）"
+    },
+    {
+      "term": "11",
+      "name": "陳椒華",
+      "ename": "CHEN JIAO-HUA",
+      "sex": "女",
+      "party": "台灣民眾黨",
+      "partyGroup": "台灣民眾黨黨團",
+      "areaName": "不分區",
+      "committee": "社會福利及衛生環境委員會",
+      "onboardDate": "113/02/01",
+      "degree": "成功大學環境工程學系博士",
+      "experience": "台灣環境保護聯盟學術委員"
+    },
+    {
+      "term": "11",
+      "name": "王世堅",
+      "ename": "WANG SHI-JIAN",
+      "sex": "男",
+      "party": "民主進步黨",
+      "partyGroup": "民主進步黨黨團",
+      "areaName": "台北市第三選舉區",
+      "committee": "交通委員會",
+      "onboardDate": "113/02/01",
+      "degree": "輔仁大學法律系",
+      "experience": "台北市議員"
+    }
+  ]
+}
