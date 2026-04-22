@@ -47,7 +47,7 @@ async def db_session() -> AsyncIterator[AsyncSession]:
 
 @pytest.fixture
 async def clean_db() -> AsyncIterator[None]:
-    """Truncate legislators table and reset the app engine before a pipeline test.
+    """Truncate all data tables and reset the app engine before a pipeline test.
 
     The scraper's run() uses the app-level cached engine. Resetting it here
     ensures it's recreated on the current event loop rather than a stale one.
@@ -60,5 +60,6 @@ async def clean_db() -> AsyncIterator[None]:
     factory = _make_session_factory()
     async with factory() as session:
         async with session.begin():
+            await session.execute(text("DELETE FROM attendance"))
             await session.execute(text("DELETE FROM legislators"))
     yield

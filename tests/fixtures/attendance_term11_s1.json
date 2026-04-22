@@ -1,0 +1,28 @@
+{
+  "dataList": [
+    {"term":"11","sessionPeriod":"1","sessionTimes":"11011001","meetingTimes":"1","meetingTypeName":"院會","meetingName":"第11屆第1會期第1次院會","meetingDate":"113/02/19","legislatorName":"柯建銘","attendMark":"出席"},
+    {"term":"11","sessionPeriod":"1","sessionTimes":"11011002","meetingTimes":"2","meetingTypeName":"院會","meetingName":"第11屆第1會期第2次院會","meetingDate":"113/02/26","legislatorName":"柯建銘","attendMark":"出席"},
+    {"term":"11","sessionPeriod":"1","sessionTimes":"11011003","meetingTimes":"3","meetingTypeName":"院會","meetingName":"第11屆第1會期第3次院會","meetingDate":"113/03/04","legislatorName":"柯建銘","attendMark":"出席"},
+    {"term":"11","sessionPeriod":"1","sessionTimes":"11011004","meetingTimes":"4","meetingTypeName":"院會","meetingName":"第11屆第1會期第4次院會","meetingDate":"113/03/11","legislatorName":"柯建銘","attendMark":"請假"},
+
+    {"term":"11","sessionPeriod":"1","sessionTimes":"11011001","meetingTimes":"1","meetingTypeName":"院會","meetingName":"第11屆第1會期第1次院會","meetingDate":"113/02/19","legislatorName":"韓國瑜","attendMark":"出席"},
+    {"term":"11","sessionPeriod":"1","sessionTimes":"11011002","meetingTimes":"2","meetingTypeName":"院會","meetingName":"第11屆第1會期第2次院會","meetingDate":"113/02/26","legislatorName":"韓國瑜","attendMark":"出席"},
+    {"term":"11","sessionPeriod":"1","sessionTimes":"11011003","meetingTimes":"3","meetingTypeName":"院會","meetingName":"第11屆第1會期第3次院會","meetingDate":"113/03/04","legislatorName":"韓國瑜","attendMark":"出席"},
+    {"term":"11","sessionPeriod":"1","sessionTimes":"11011004","meetingTimes":"4","meetingTypeName":"院會","meetingName":"第11屆第1會期第4次院會","meetingDate":"113/03/11","legislatorName":"韓國瑜","attendMark":"出席"},
+
+    {"term":"11","sessionPeriod":"1","sessionTimes":"11011001","meetingTimes":"1","meetingTypeName":"院會","meetingName":"第11屆第1會期第1次院會","meetingDate":"113/02/19","legislatorName":"黃國昌","attendMark":"出席"},
+    {"term":"11","sessionPeriod":"1","sessionTimes":"11011002","meetingTimes":"2","meetingTypeName":"院會","meetingName":"第11屆第1會期第2次院會","meetingDate":"113/02/26","legislatorName":"黃國昌","attendMark":"缺席"},
+    {"term":"11","sessionPeriod":"1","sessionTimes":"11011003","meetingTimes":"3","meetingTypeName":"院會","meetingName":"第11屆第1會期第3次院會","meetingDate":"113/03/04","legislatorName":"黃國昌","attendMark":"出席"},
+    {"term":"11","sessionPeriod":"1","sessionTimes":"11011004","meetingTimes":"4","meetingTypeName":"院會","meetingName":"第11屆第1會期第4次院會","meetingDate":"113/03/11","legislatorName":"黃國昌","attendMark":"缺席"},
+
+    {"term":"11","sessionPeriod":"1","sessionTimes":"11011001","meetingTimes":"1","meetingTypeName":"院會","meetingName":"第11屆第1會期第1次院會","meetingDate":"113/02/19","legislatorName":"陳椒華","attendMark":"出席"},
+    {"term":"11","sessionPeriod":"1","sessionTimes":"11011002","meetingTimes":"2","meetingTypeName":"院會","meetingName":"第11屆第1會期第2次院會","meetingDate":"113/02/26","legislatorName":"陳椒華","attendMark":"出席"},
+    {"term":"11","sessionPeriod":"1","sessionTimes":"11011003","meetingTimes":"3","meetingTypeName":"院會","meetingName":"第11屆第1會期第3次院會","meetingDate":"113/03/04","legislatorName":"陳椒華","attendMark":"公假"},
+    {"term":"11","sessionPeriod":"1","sessionTimes":"11011004","meetingTimes":"4","meetingTypeName":"院會","meetingName":"第11屆第1會期第4次院會","meetingDate":"113/03/11","legislatorName":"陳椒華","attendMark":"缺席"},
+
+    {"term":"11","sessionPeriod":"1","sessionTimes":"11011001","meetingTimes":"1","meetingTypeName":"院會","meetingName":"第11屆第1會期第1次院會","meetingDate":"113/02/19","legislatorName":"王世堅","attendMark":"出席"},
+    {"term":"11","sessionPeriod":"1","sessionTimes":"11011002","meetingTimes":"2","meetingTypeName":"院會","meetingName":"第11屆第1會期第2次院會","meetingDate":"113/02/26","legislatorName":"王世堅","attendMark":"缺席"},
+    {"term":"11","sessionPeriod":"1","sessionTimes":"11011003","meetingTimes":"3","meetingTypeName":"院會","meetingName":"第11屆第1會期第3次院會","meetingDate":"113/03/04","legislatorName":"王世堅","attendMark":"缺席"},
+    {"term":"11","sessionPeriod":"1","sessionTimes":"11011004","meetingTimes":"4","meetingTypeName":"院會","meetingName":"第11屆第1會期第4次院會","meetingDate":"113/03/11","legislatorName":"王世堅","attendMark":"缺席"}
+  ]
+}
