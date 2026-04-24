@@ -32,7 +32,7 @@ def test_attendance_uid() -> None:
 def test_fixture_loads() -> None:
     rows = _load_fixture(11)
     assert rows is not None
-    assert len(rows) == 20  # 5 legislators × 4 meetings
+    assert len(rows) == 20  # 5 legislators x 4 meetings
     names = {r["legislatorName"] for r in rows}
     assert "柯建銘" in names
     assert "韓國瑜" in names
@@ -70,21 +70,21 @@ async def test_attendance_upsert_unchanged(db_session) -> None:
     from datetime import date
 
     now = datetime(2024, 2, 19, tzinfo=UTC)
-    kwargs = dict(
-        uid="test_att_unchanged_001",
-        term=11,
-        session_period=1,
-        meeting_times=1,
-        meeting_type="院會",
-        meeting_name="第11屆第1會期第1次院會",
-        meeting_date=date(2024, 2, 19),
-        legislator_uid="11_測試乙",
-        legislator_name="測試乙",
-        attend_mark="出席",
-        valid_from=now,
-        raw={},
-        now=now,
-    )
+    kwargs = {
+        "uid": "test_att_unchanged_001",
+        "term": 11,
+        "session_period": 1,
+        "meeting_times": 1,
+        "meeting_type": "院會",
+        "meeting_name": "第11屆第1會期第1次院會",
+        "meeting_date": date(2024, 2, 19),
+        "legislator_uid": "11_測試乙",
+        "legislator_name": "測試乙",
+        "attend_mark": "出席",
+        "valid_from": now,
+        "raw": {},
+        "now": now,
+    }
     await upsert_attendance(db_session, **kwargs)
     await db_session.flush()
     result = await upsert_attendance(db_session, **kwargs)
@@ -97,19 +97,19 @@ async def test_attendance_upsert_correction(db_session) -> None:
 
     t1 = datetime(2024, 2, 19, tzinfo=UTC)
     t2 = datetime(2024, 3, 1, tzinfo=UTC)
-    base = dict(
-        uid="test_att_correction_001",
-        term=11,
-        session_period=1,
-        meeting_times=1,
-        meeting_type="院會",
-        meeting_name="第11屆第1會期第1次院會",
-        meeting_date=date(2024, 2, 19),
-        legislator_uid="11_測試丙",
-        legislator_name="測試丙",
-        valid_from=t1,
-        raw={},
-    )
+    base = {
+        "uid": "test_att_correction_001",
+        "term": 11,
+        "session_period": 1,
+        "meeting_times": 1,
+        "meeting_type": "院會",
+        "meeting_name": "第11屆第1會期第1次院會",
+        "meeting_date": date(2024, 2, 19),
+        "legislator_uid": "11_測試丙",
+        "legislator_name": "測試丙",
+        "valid_from": t1,
+        "raw": {},
+    }
     await upsert_attendance(db_session, attend_mark="缺席", now=t1, **base)
     await db_session.flush()
     result = await upsert_attendance(db_session, attend_mark="請假", now=t2, **base)

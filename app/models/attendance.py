@@ -13,6 +13,7 @@ Bi-temporal columns follow the same pattern as the legislators table:
 from __future__ import annotations
 
 from datetime import date, datetime
+from typing import Any
 from uuid import UUID, uuid4
 
 from sqlalchemy import Date, DateTime, Index, Integer, String, func
@@ -53,7 +54,7 @@ class Attendance(Base):
     # 出席 | 缺席 | 請假 | 公假 | 列席
 
     # --- Original payload ---
-    raw_data: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+    raw_data: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
 
     # --- Bi-temporal: business time ---
     valid_from: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)

@@ -26,6 +26,7 @@ A point-in-time query for `as_of` (a datetime) is:
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Any
 from uuid import UUID, uuid4
 
 from sqlalchemy import DateTime, Index, Integer, String, func
@@ -58,7 +59,7 @@ class Legislator(Base):
     term: Mapped[int] = mapped_column(Integer, nullable=False)  # 屆別
 
     # --- Original payload (auditability / debugging) ---
-    raw_data: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+    raw_data: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
 
     # --- Bi-temporal: business time ---
     valid_from: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)

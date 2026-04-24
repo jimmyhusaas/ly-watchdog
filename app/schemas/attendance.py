@@ -16,4 +16,4 @@ class AttendanceRankRow(BaseModel):
     absent: int = Field(description="缺席次數")
     leave: int = Field(description="請假或公假次數")
     total: int = Field(description="總會議次數")
-    rate: float = Field(description="出席率 (0–100)")
+    rate: float = Field(description="出席率 (0-100)")

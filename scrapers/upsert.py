@@ -20,7 +20,7 @@ async def upsert_legislator(
     district: str | None,
     party: str | None,
     valid_from: datetime,
-    raw: dict,
+    raw: dict[str, Any],
     now: datetime,
 ) -> str:
     """Append-only bi-temporal write for one legislator record.
@@ -88,7 +88,7 @@ async def upsert_attendance(
     legislator_name: str,
     attend_mark: str,
     valid_from: datetime,
-    raw: dict,
+    raw: dict[str, Any],
     now: datetime,
 ) -> str:
     """Append-only bi-temporal write for one attendance record.

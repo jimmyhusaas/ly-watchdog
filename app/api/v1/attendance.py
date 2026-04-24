@@ -24,7 +24,7 @@ async def attendance_ranking(
     meeting_type: str | None = Query(default=None, description="院會 or 委員會名稱篩選"),
     as_of: datetime | None = Query(
         default=None,
-        description="ISO-8601 timestamp — 時間旅行查詢；省略則回傳當前最新狀態",
+        description="ISO-8601 timestamp - 時間旅行查詢; 省略則回傳當前最新狀態",
     ),
     session: AsyncSession = Depends(get_session),
 ) -> list[AttendanceRankRow]:

@@ -20,9 +20,13 @@ from datetime import UTC, datetime
 import psycopg2
 
 # ── connection ────────────────────────────────────────────────────────────────
-DB = dict(
-    host="localhost", port=5432, dbname="ly_watchdog", user="watchdog", password="watchdog_dev"
-)
+DB = {
+    "host": "localhost",
+    "port": 5432,
+    "dbname": "ly_watchdog",
+    "user": "watchdog",
+    "password": "watchdog_dev",
+}
 API = "http://localhost:8000"
 
 # ── time anchors ──────────────────────────────────────────────────────────────
