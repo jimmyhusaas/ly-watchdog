@@ -7,6 +7,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.attendance import Attendance
+from app.models.bill import Bill
+from app.models.interpellation import Interpellation
 from app.models.legislator import Legislator
 from app.models.vote import Vote
 
@@ -221,6 +223,145 @@ async def upsert_vote(
             legislator_name=legislator_name,
             party=party,
             vote_result=vote_result,
+            raw_data=raw,
+            valid_from=existing.valid_from,
+            valid_to=None,
+            recorded_at=now,
+            superseded_at=None,
+        )
+    )
+    return "updated"
+
+
+async def upsert_bill(
+    session: AsyncSession,
+    *,
+    uid: str,
+    term: int,
+    session_period: int,
+    bill_no: str,
+    bill_name: str,
+    bill_org: str | None,
+    bill_proposer: str | None,
+    bill_cosignatory: str | None,
+    bill_status: str,
+    valid_from: datetime,
+    raw: dict[str, Any],
+    now: datetime,
+) -> str:
+    """Append-only bi-temporal write for one bill record.
+
+    Returns 'inserted', 'updated', or 'unchanged'.
+    """
+    stmt = select(Bill).where(
+        Bill.bill_uid == uid,
+        Bill.superseded_at.is_(None),
+        Bill.valid_to.is_(None),
+    )
+    existing: Bill | None = (await session.execute(stmt)).scalar_one_or_none()
+
+    if existing is None:
+        session.add(
+            Bill(
+                bill_uid=uid,
+                term=term,
+                session_period=session_period,
+                bill_no=bill_no,
+                bill_name=bill_name,
+                bill_org=bill_org,
+                bill_proposer=bill_proposer,
+                bill_cosignatory=bill_cosignatory,
+                bill_status=bill_status,
+                raw_data=raw,
+                valid_from=valid_from,
+                valid_to=None,
+                recorded_at=now,
+                superseded_at=None,
+            )
+        )
+        return "inserted"
+
+    if existing.bill_status == bill_status:
+        return "unchanged"
+
+    # Review status updated — supersede old row, insert new
+    existing.superseded_at = now
+    session.add(
+        Bill(
+            bill_uid=uid,
+            term=term,
+            session_period=session_period,
+            bill_no=bill_no,
+            bill_name=bill_name,
+            bill_org=bill_org,
+            bill_proposer=bill_proposer,
+            bill_cosignatory=bill_cosignatory,
+            bill_status=bill_status,
+            raw_data=raw,
+            valid_from=existing.valid_from,
+            valid_to=None,
+            recorded_at=now,
+            superseded_at=None,
+        )
+    )
+    return "updated"
+
+
+async def upsert_interpellation(
+    session: AsyncSession,
+    *,
+    uid: str,
+    term: int,
+    session_period: int,
+    meeting_times: int,
+    legislator_name: str,
+    interp_content: str,
+    valid_from: datetime,
+    raw: dict[str, Any],
+    now: datetime,
+) -> str:
+    """Append-only bi-temporal write for one interpellation record.
+
+    Returns 'inserted', 'updated', or 'unchanged'.
+    """
+    stmt = select(Interpellation).where(
+        Interpellation.interp_uid == uid,
+        Interpellation.superseded_at.is_(None),
+        Interpellation.valid_to.is_(None),
+    )
+    existing: Interpellation | None = (await session.execute(stmt)).scalar_one_or_none()
+
+    if existing is None:
+        session.add(
+            Interpellation(
+                interp_uid=uid,
+                term=term,
+                session_period=session_period,
+                meeting_times=meeting_times,
+                legislator_name=legislator_name,
+                interp_content=interp_content,
+                raw_data=raw,
+                valid_from=valid_from,
+                valid_to=None,
+                recorded_at=now,
+                superseded_at=None,
+            )
+        )
+        return "inserted"
+
+    if existing.interp_content == interp_content:
+        return "unchanged"
+
+    # Content corrected (e.g. OCR fix) — supersede old row, insert new
+    existing.superseded_at = now
+    session.add(
+        Interpellation(
+            interp_uid=uid,
+            term=term,
+            session_period=session_period,
+            meeting_times=meeting_times,
+            legislator_name=legislator_name,
+            interp_content=interp_content,
             raw_data=raw,
             valid_from=existing.valid_from,
             valid_to=None,

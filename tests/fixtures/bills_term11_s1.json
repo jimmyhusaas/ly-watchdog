@@ -1,0 +1,16 @@
+{
+  "dataList": [
+    {"term":"11","sessionPeriod":"1","billNo":"政府提案第17851號","billName":"行政院函請審議中央政府總預算案","billOrg":"行政院","billProposer":"","billCosignatory":"","billStatus":"完成立法","pdfUrl":""},
+    {"term":"11","sessionPeriod":"1","billNo":"政府提案第17852號","billName":"行政院函請審議財政收支劃分法修正案","billOrg":"行政院","billProposer":"","billCosignatory":"","billStatus":"完成立法","pdfUrl":""},
+    {"term":"11","sessionPeriod":"1","billNo":"政府提案第17853號","billName":"行政院函請審議公務人員退休資遣撫卹法修正案","billOrg":"行政院","billProposer":"","billCosignatory":"","billStatus":"委員會審查","pdfUrl":""},
+    {"term":"11","sessionPeriod":"1","billNo":"政府提案第17854號","billName":"行政院函請審議國家通訊傳播委員會組織法修正案","billOrg":"行政院","billProposer":"","billCosignatory":"","billStatus":"委員會審查","pdfUrl":""},
+    {"term":"11","sessionPeriod":"1","billNo":"委員提案第35001號","billName":"立法委員提案修正刑法部分條文","billOrg":"立法委員","billProposer":"柯建銘、王世堅、陳椒華","billCosignatory":"林岱樺、吳思瑤","billStatus":"完成立法","pdfUrl":""},
+    {"term":"11","sessionPeriod":"1","billNo":"委員提案第35002號","billName":"立法委員提案修正著作權法部分條文","billOrg":"立法委員","billProposer":"柯建銘、江啟臣","billCosignatory":"","billStatus":"完成立法","pdfUrl":""},
+    {"term":"11","sessionPeriod":"1","billNo":"委員提案第35003號","billName":"立法委員提案修正消費者保護法部分條文","billOrg":"立法委員","billProposer":"王世堅、陳椒華","billCosignatory":"","billStatus":"委員會審查","pdfUrl":""},
+    {"term":"11","sessionPeriod":"1","billNo":"委員提案第35004號","billName":"立法委員提案修正道路交通管理處罰條例部分條文","billOrg":"立法委員","billProposer":"韓國瑜、江啟臣","billCosignatory":"","billStatus":"委員會審查","pdfUrl":""},
+    {"term":"11","sessionPeriod":"1","billNo":"委員提案第35005號","billName":"立法委員提案修正食品安全衛生管理法部分條文","billOrg":"立法委員","billProposer":"陳椒華","billCosignatory":"王世堅","billStatus":"委員會審查","pdfUrl":""},
+    {"term":"11","sessionPeriod":"1","billNo":"委員提案第35006號","billName":"立法委員提案修正再生能源發展條例部分條文","billOrg":"立法委員","billProposer":"柯建銘","billCosignatory":"","billStatus":"院會審查","pdfUrl":""},
+    {"term":"11","sessionPeriod":"1","billNo":"黨團提案第1001號","billName":"民主進步黨黨團提案修正預算法部分條文","billOrg":"黨團","billProposer":"","billCosignatory":"","billStatus":"院會審查","pdfUrl":""},
+    {"term":"11","sessionPeriod":"1","billNo":"黨團提案第1002號","billName":"中國國民黨黨團提案修正立法院組織法部分條文","billOrg":"黨團","billProposer":"","billCosignatory":"","billStatus":"院會審查","pdfUrl":""}
+  ]
+}
