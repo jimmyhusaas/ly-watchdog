@@ -46,20 +46,14 @@ async def attendance_ranking(
         )
 
     # ── aggregation ────────────────────────────────────────────────────
-    attended_col = func.sum(
-        case((Attendance.attend_mark == "出席", 1), else_=0)
-    ).label("attended")
-    absent_col = func.sum(
-        case((Attendance.attend_mark == "缺席", 1), else_=0)
-    ).label("absent")
-    leave_col = func.sum(
-        case((Attendance.attend_mark.in_(["請假", "公假"]), 1), else_=0)
-    ).label("leave")
+    attended_col = func.sum(case((Attendance.attend_mark == "出席", 1), else_=0)).label("attended")
+    absent_col = func.sum(case((Attendance.attend_mark == "缺席", 1), else_=0)).label("absent")
+    leave_col = func.sum(case((Attendance.attend_mark.in_(["請假", "公假"]), 1), else_=0)).label(
+        "leave"
+    )
     total_col = func.count().label("total")
     rate_col = (
-        func.sum(case((Attendance.attend_mark == "出席", 1), else_=0))
-        * 100.0
-        / func.count()
+        func.sum(case((Attendance.attend_mark == "出席", 1), else_=0)) * 100.0 / func.count()
     ).label("rate")
 
     stmt = (

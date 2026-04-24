@@ -77,9 +77,7 @@ _HEADERS = {
 }
 
 
-async def _fetch_page(
-    client: httpx.AsyncClient, term: int, offset: int
-) -> list[dict[str, Any]]:
+async def _fetch_page(client: httpx.AsyncClient, term: int, offset: int) -> list[dict[str, Any]]:
     resp = await client.get(
         _LY_URL,
         params={
@@ -144,25 +142,24 @@ async def run(use_fixture: bool = False) -> dict[str, int]:
                     continue
                 log.info("Term %d: %d records fetched", term, len(rows))
 
-            async with session_factory() as session:
-                async with session.begin():
-                    for row in rows:
-                        name = (row.get("name") or "").strip()
-                        if not name:
-                            continue
+            async with session_factory() as session, session.begin():
+                for row in rows:
+                    name = (row.get("name") or "").strip()
+                    if not name:
+                        continue
 
-                        result = await upsert_legislator(
-                            session,
-                            uid=_uid(term, name),
-                            term=term,
-                            name=name,
-                            district=row.get("areaName") or None,
-                            party=row.get("party") or None,
-                            valid_from=_roc_to_datetime(row.get("onboardDate")) or now,
-                            raw=row,
-                            now=now,
-                        )
-                        stats[result] += 1
+                    result = await upsert_legislator(
+                        session,
+                        uid=_uid(term, name),
+                        term=term,
+                        name=name,
+                        district=row.get("areaName") or None,
+                        party=row.get("party") or None,
+                        valid_from=_roc_to_datetime(row.get("onboardDate")) or now,
+                        raw=row,
+                        now=now,
+                    )
+                    stats[result] += 1
 
             log.info("Term %d done. stats so far: %s", term, stats)
 
