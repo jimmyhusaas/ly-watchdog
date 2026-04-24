@@ -4,14 +4,12 @@ from datetime import UTC, datetime
 
 import pytest
 from httpx import AsyncClient
-from sqlalchemy import text
 
-from app.models.attendance import Attendance
-from scrapers.attendance import _attendance_uid, _roc_to_date, _load_fixture, run
+from scrapers.attendance import _attendance_uid, _load_fixture, _roc_to_date, run
 from scrapers.upsert import upsert_attendance
 
-
 # ── unit: helpers ─────────────────────────────────────────────────────────────
+
 
 def test_roc_to_date() -> None:
     d = _roc_to_date("113/02/19")
@@ -42,9 +40,11 @@ def test_fixture_loads() -> None:
 
 # ── integration: upsert ───────────────────────────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_attendance_upsert_insert(db_session) -> None:
     from datetime import date
+
     now = datetime(2024, 2, 19, tzinfo=UTC)
     result = await upsert_attendance(
         db_session,
@@ -68,14 +68,22 @@ async def test_attendance_upsert_insert(db_session) -> None:
 @pytest.mark.asyncio
 async def test_attendance_upsert_unchanged(db_session) -> None:
     from datetime import date
+
     now = datetime(2024, 2, 19, tzinfo=UTC)
     kwargs = dict(
         uid="test_att_unchanged_001",
-        term=11, session_period=1, meeting_times=1,
-        meeting_type="院會", meeting_name="第11屆第1會期第1次院會",
+        term=11,
+        session_period=1,
+        meeting_times=1,
+        meeting_type="院會",
+        meeting_name="第11屆第1會期第1次院會",
         meeting_date=date(2024, 2, 19),
-        legislator_uid="11_測試乙", legislator_name="測試乙",
-        attend_mark="出席", valid_from=now, raw={}, now=now,
+        legislator_uid="11_測試乙",
+        legislator_name="測試乙",
+        attend_mark="出席",
+        valid_from=now,
+        raw={},
+        now=now,
     )
     await upsert_attendance(db_session, **kwargs)
     await db_session.flush()
@@ -86,15 +94,21 @@ async def test_attendance_upsert_unchanged(db_session) -> None:
 @pytest.mark.asyncio
 async def test_attendance_upsert_correction(db_session) -> None:
     from datetime import date
+
     t1 = datetime(2024, 2, 19, tzinfo=UTC)
     t2 = datetime(2024, 3, 1, tzinfo=UTC)
     base = dict(
         uid="test_att_correction_001",
-        term=11, session_period=1, meeting_times=1,
-        meeting_type="院會", meeting_name="第11屆第1會期第1次院會",
+        term=11,
+        session_period=1,
+        meeting_times=1,
+        meeting_type="院會",
+        meeting_name="第11屆第1會期第1次院會",
         meeting_date=date(2024, 2, 19),
-        legislator_uid="11_測試丙", legislator_name="測試丙",
-        valid_from=t1, raw={},
+        legislator_uid="11_測試丙",
+        legislator_name="測試丙",
+        valid_from=t1,
+        raw={},
     )
     await upsert_attendance(db_session, attend_mark="缺席", now=t1, **base)
     await db_session.flush()
@@ -103,6 +117,7 @@ async def test_attendance_upsert_correction(db_session) -> None:
 
 
 # ── integration: full scraper run ─────────────────────────────────────────────
+
 
 @pytest.mark.asyncio
 async def test_full_attendance_run(clean_db) -> None:
@@ -123,6 +138,7 @@ async def test_full_attendance_run_idempotent(clean_db) -> None:
 
 
 # ── API: ranking ──────────────────────────────────────────────────────────────
+
 
 @pytest.mark.asyncio
 async def test_ranking_api(client: AsyncClient, clean_db) -> None:
@@ -149,9 +165,7 @@ async def test_ranking_api(client: AsyncClient, clean_db) -> None:
 @pytest.mark.asyncio
 async def test_ranking_meeting_type_filter(client: AsyncClient, clean_db) -> None:
     await run(use_fixture=True)
-    resp = await client.get(
-        "/v1/attendance/ranking?term=11&session_period=1&meeting_type=院會"
-    )
+    resp = await client.get("/v1/attendance/ranking?term=11&session_period=1&meeting_type=院會")
     assert resp.status_code == 200
     rows = resp.json()
     assert len(rows) == 5

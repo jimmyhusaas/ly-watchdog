@@ -58,8 +58,8 @@ async def clean_db() -> AsyncIterator[None]:
     db_mod._sessionmaker = None
 
     factory = _make_session_factory()
-    async with factory() as session:
-        async with session.begin():
-            await session.execute(text("DELETE FROM attendance"))
-            await session.execute(text("DELETE FROM legislators"))
+    async with factory() as session, session.begin():
+        await session.execute(text("DELETE FROM votes"))
+        await session.execute(text("DELETE FROM attendance"))
+        await session.execute(text("DELETE FROM legislators"))
     yield

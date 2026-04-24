@@ -1,12 +1,14 @@
 """Bi-temporal upsert helpers — shared by all scrapers."""
 
-from datetime import datetime
+from datetime import date, datetime
+from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.attendance import Attendance
 from app.models.legislator import Legislator
+from app.models.vote import Vote
 
 
 async def upsert_legislator(
@@ -49,11 +51,7 @@ async def upsert_legislator(
         )
         return "inserted"
 
-    changed = (
-        existing.name != name
-        or existing.district != district
-        or existing.party != party
-    )
+    changed = existing.name != name or existing.district != district or existing.party != party
     if not changed:
         return "unchanged"
 
@@ -143,6 +141,86 @@ async def upsert_attendance(
             legislator_uid=legislator_uid,
             legislator_name=legislator_name,
             attend_mark=attend_mark,
+            raw_data=raw,
+            valid_from=existing.valid_from,
+            valid_to=None,
+            recorded_at=now,
+            superseded_at=None,
+        )
+    )
+    return "updated"
+
+
+async def upsert_vote(
+    session: AsyncSession,
+    *,
+    uid: str,
+    term: int,
+    session_period: int,
+    meeting_times: int,
+    vote_times: int,
+    vote_date: date,
+    bill_no: str | None,
+    bill_name: str,
+    legislator_name: str,
+    party: str | None,
+    vote_result: str,
+    valid_from: datetime,
+    raw: dict[str, Any],
+    now: datetime,
+) -> str:
+    """Append-only bi-temporal write for one vote record.
+
+    Returns 'inserted', 'updated', or 'unchanged'.
+    """
+    stmt = select(Vote).where(
+        Vote.vote_uid == uid,
+        Vote.superseded_at.is_(None),
+        Vote.valid_to.is_(None),
+    )
+    existing: Vote | None = (await session.execute(stmt)).scalar_one_or_none()
+
+    if existing is None:
+        session.add(
+            Vote(
+                vote_uid=uid,
+                term=term,
+                session_period=session_period,
+                meeting_times=meeting_times,
+                vote_times=vote_times,
+                vote_date=vote_date,
+                bill_no=bill_no,
+                bill_name=bill_name,
+                legislator_name=legislator_name,
+                party=party,
+                vote_result=vote_result,
+                raw_data=raw,
+                valid_from=valid_from,
+                valid_to=None,
+                recorded_at=now,
+                superseded_at=None,
+            )
+        )
+        return "inserted"
+
+    if existing.vote_result == vote_result:
+        return "unchanged"
+
+    # Corrected vote result — supersede old row, insert new
+    existing.superseded_at = now
+    session.add(
+        Vote(
+            vote_uid=uid,
+            term=term,
+            session_period=session_period,
+            meeting_times=meeting_times,
+            vote_times=vote_times,
+            vote_date=vote_date,
+            bill_no=bill_no,
+            bill_name=bill_name,
+            legislator_name=legislator_name,
+            party=party,
+            vote_result=vote_result,
             raw_data=raw,
             valid_from=existing.valid_from,
             valid_to=None,

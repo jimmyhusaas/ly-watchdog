@@ -2,8 +2,9 @@
 
 from fastapi import APIRouter
 
-from app.api.v1 import attendance, legislators
+from app.api.v1 import attendance, legislators, votes
 
 api_router = APIRouter(prefix="/v1")
 api_router.include_router(legislators.router)
 api_router.include_router(attendance.router)
+api_router.include_router(votes.router)
