@@ -68,7 +68,7 @@ async def _fetch_page(client: httpx.AsyncClient, term: int, offset: int) -> list
             "term": str(term),
         },
         headers=_HEADERS,
-        timeout=30,
+        timeout=120,
         follow_redirects=True,
     )
     resp.raise_for_status()
@@ -112,6 +112,10 @@ async def run(use_fixture: bool = False) -> dict[str, int]:
 
             async with session_factory() as session, session.begin():
                 for row in rows:
+                    # API does not filter by term server-side; skip mismatched rows
+                    if str(row.get("term") or "") != str(term):
+                        continue
+
                     bill_no = (row.get("billNo") or "").strip()
                     if not bill_no:
                         continue
