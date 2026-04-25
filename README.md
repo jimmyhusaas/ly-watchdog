@@ -34,21 +34,21 @@
 
 ## 功能規劃 / Roadmap
 
-### Phase 1（目標：Summit 前可展示）
-- [ ] 立委基本資料 API（姓名、選區、黨籍、屆別）
-- [ ] 出缺席紀錄爬取與儲存
-- [ ] 出缺席排行榜查詢 API（依會期、黨籍篩選）
-- [ ] Docker Compose 一鍵啟動開發環境
+### Phase 1 ✅
+- [x] 立委基本資料 API（姓名、選區、黨籍、屆別）
+- [x] 出缺席紀錄爬取與儲存
+- [x] 出缺席排行榜查詢 API（依會期、黨籍篩選）
+- [x] Docker Compose 一鍵啟動開發環境
 
-### Phase 2
-- [ ] 投票紀錄爬取與儲存
-- [ ] 黨紀一致性分析（某立委在黨團表決中的異動率）
-- [ ] 跨會期趨勢查詢 API
+### Phase 2 ✅
+- [x] 投票紀錄爬取與儲存
+- [x] 黨紀一致性分析（某立委在黨團表決中的異動率）
+- [x] 跨會期趨勢查詢 API
 
-### Phase 3
-- [ ] 法案進度追蹤
-- [ ] 提案數量與類型統計
-- [ ] 質詢關鍵字索引
+### Phase 3 ✅
+- [x] 法案進度追蹤
+- [x] 提案數量與類型統計
+- [x] 質詢關鍵字索引
 
 ---
 
@@ -113,6 +113,71 @@
 - 語言從 LiveScript → Python（爬蟲生態、社群貢獻門檻、資料分析擴展性）
 - 新增 bi-temporal 資料模型，支援歷史時點查詢
 - 以記者工作流程為主要設計目標，而非通用 API
+
+---
+
+## 快速開始 / Quick Start
+
+### 1. 啟動服務
+
+```bash
+git clone https://github.com/jimmyhusaas/ly-watchdog.git
+cd ly-watchdog
+docker compose up --build -d
+docker compose run --rm migrate
+```
+
+### 2. 抓取資料
+
+```bash
+docker compose exec app bash
+python -m scrapers.legislators
+python -m scrapers.attendance
+python -m scrapers.votes
+python -m scrapers.bills
+python -m scrapers.interpellations
+```
+
+### 3. 驗證 API
+
+```bash
+# 健康檢查
+curl http://localhost:8000/health
+
+# 立委基本資料（第 11 屆）
+curl "http://localhost:8000/v1/legislators?term=11"
+
+# 出缺席排行榜
+curl "http://localhost:8000/v1/attendance/ranking?term=11&session_period=1"
+
+# 投票紀錄
+curl "http://localhost:8000/v1/votes?term=11&legislator_name=柯建銘"
+
+# 黨紀偏離率排行榜
+curl "http://localhost:8000/v1/votes/party-discipline?term=11&session_period=1"
+
+# 法案列表（依審查進度篩選）
+curl "http://localhost:8000/v1/bills?term=11&bill_status=完成立法"
+
+# 提案類型統計
+curl "http://localhost:8000/v1/bills/stats?term=11"
+
+# 質詢關鍵字搜尋（中文需 URL encode）
+curl -G "http://localhost:8000/v1/interpellations" \
+  --data-urlencode "term=11" \
+  --data-urlencode "keyword=預算"
+```
+
+API 文件（Swagger UI）：`http://localhost:8000/docs`
+
+### 4. 時間旅行查詢（as_of）
+
+所有端點支援 `as_of` 參數，查詢特定時點的資料快照：
+
+```bash
+# 查詢 2024-06-01 當時的立委資料（可追溯黨籍變動）
+curl "http://localhost:8000/v1/legislators?term=11&as_of=2024-06-01T00:00:00Z"
+```
 
 ---
 
