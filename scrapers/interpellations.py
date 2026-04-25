@@ -35,7 +35,7 @@ from scrapers.upsert import upsert_interpellation
 log = logging.getLogger(__name__)
 
 INTERPS_DATASET_ID = 8
-_LY_URL = "https://data.ly.gov.tw/odw/usageRecord.action"
+_LY_URL = "https://data.ly.gov.tw/odw/openDatasetJson.action"
 _FETCH_TERMS = [10, 11]
 _PAGE_SIZE = 1000
 
@@ -65,11 +65,8 @@ async def _fetch_page(client: httpx.AsyncClient, term: int, offset: int) -> list
         _LY_URL,
         params={
             "id": str(INTERPS_DATASET_ID),
-            "type": "JSON",
             "fileType": "JSON",
             "term": str(term),
-            "offset": str(offset),
-            "limit": str(_PAGE_SIZE),
         },
         headers=_HEADERS,
         timeout=30,
@@ -79,19 +76,11 @@ async def _fetch_page(client: httpx.AsyncClient, term: int, offset: int) -> list
     data = resp.json()
     if not isinstance(data, dict):
         raise ValueError(f"Unexpected response type: {type(data)}")
-    return cast(list[dict[str, Any]], data.get("dataList", []))
+    return cast(list[dict[str, Any]], data.get("jsonList", []))
 
 
 async def _fetch_term(client: httpx.AsyncClient, term: int) -> list[dict[str, Any]]:
-    results: list[dict[str, Any]] = []
-    offset = 0
-    while True:
-        page = await _fetch_page(client, term, offset)
-        results.extend(page)
-        if len(page) < _PAGE_SIZE:
-            break
-        offset += _PAGE_SIZE
-    return results
+    return await _fetch_page(client, term, 0)
 
 
 def _load_fixture(term: int) -> list[dict[str, Any]] | None:
