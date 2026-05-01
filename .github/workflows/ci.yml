@@ -15,6 +15,24 @@ jobs:
     name: Lint + type-check + test
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: watchdog
+          POSTGRES_PASSWORD: watchdog_dev
+          POSTGRES_DB: ly_watchdog
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U watchdog"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql+asyncpg://watchdog:watchdog_dev@localhost:5432/ly_watchdog
+
     steps:
       - uses: actions/checkout@v4
 
@@ -39,6 +57,9 @@ jobs:
 
       - name: mypy
         run: uv run mypy app scrapers
+
+      - name: Run migrations
+        run: uv run alembic upgrade head
 
       - name: pytest
         run: uv run pytest --cov=app --cov-report=term-missing
