@@ -80,9 +80,7 @@ def _legislator_uid(term: int, name: str) -> str:
     return f"{term}_{name}"
 
 
-async def _fetch_page(
-    client: httpx.AsyncClient, term: int, page: int
-) -> list[dict[str, Any]]:
+async def _fetch_page(client: httpx.AsyncClient, term: int, page: int) -> list[dict[str, Any]]:
     resp = await client.get(
         _LY_URL,
         params={

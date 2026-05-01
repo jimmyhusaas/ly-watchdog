@@ -79,7 +79,7 @@ def _roc_to_datetime(date_str: str | None) -> datetime | None:
     try:
         parts = date_str.split("/")
         year = int(parts[0])
-        if year < 1912:          # ROC year (e.g. 113 → 2024)
+        if year < 1912:  # ROC year (e.g. 113 → 2024)
             year += 1911
         return datetime(year, int(parts[1]), int(parts[2]), tzinfo=UTC)
     except (ValueError, IndexError, AttributeError):
@@ -90,9 +90,7 @@ def _uid(term: int, name: str) -> str:
     return f"{term}_{name}"
 
 
-async def _fetch_page(
-    client: httpx.AsyncClient, page: int
-) -> list[dict[str, Any]]:
+async def _fetch_page(client: httpx.AsyncClient, page: int) -> list[dict[str, Any]]:
     resp = await client.get(
         _LY_URL,
         params={
@@ -127,12 +125,7 @@ async def _fetch_all(client: httpx.AsyncClient) -> list[dict[str, Any]]:
 
 def _load_fixture(term: int) -> list[dict[str, Any]] | None:
     """Return fixture data for a term, or None if no fixture exists."""
-    path = (
-        Path(__file__).parent.parent
-        / "tests"
-        / "fixtures"
-        / f"legislators_term{term}.json"
-    )
+    path = Path(__file__).parent.parent / "tests" / "fixtures" / f"legislators_term{term}.json"
     if not path.exists():
         return None
     data = json.loads(path.read_text())
@@ -165,31 +158,31 @@ async def run(use_fixture: bool = False) -> dict[str, int]:
 
     # ── upsert ────────────────────────────────────────────────────────────────
     async with session_factory() as session, session.begin():
-            for row in all_rows:
-                name = (row.get("name") or "").strip()
-                if not name:
-                    continue
+        for row in all_rows:
+            name = (row.get("name") or "").strip()
+            if not name:
+                continue
 
-                try:
-                    term = int(row.get("term") or 0)
-                except (TypeError, ValueError):
-                    continue
+            try:
+                term = int(row.get("term") or 0)
+            except (TypeError, ValueError):
+                continue
 
-                if term not in _FETCH_TERMS:
-                    continue
+            if term not in _FETCH_TERMS:
+                continue
 
-                result = await upsert_legislator(
-                    session,
-                    uid=_uid(term, name),
-                    term=term,
-                    name=name,
-                    district=row.get("areaName") or None,
-                    party=row.get("party") or None,
-                    valid_from=_roc_to_datetime(row.get("onboardDate")) or now,
-                    raw=row,
-                    now=now,
-                )
-                stats[result] += 1
+            result = await upsert_legislator(
+                session,
+                uid=_uid(term, name),
+                term=term,
+                name=name,
+                district=row.get("areaName") or None,
+                party=row.get("party") or None,
+                valid_from=_roc_to_datetime(row.get("onboardDate")) or now,
+                raw=row,
+                now=now,
+            )
+            stats[result] += 1
 
     log.info("Scrape complete: %s", stats)
     return stats
