@@ -3,9 +3,14 @@
 Run directly:
     python -m scrapers.attendance [--fixture]
 
-API response shape (JSON):
+NOTE: As of 2025, dataset id=36 returns {"jsonList":[]} — the LY open-data
+platform has not published per-legislator attendance marks.  The scraper
+will run without error and report 0 records; fixture mode still works for
+tests.  When the dataset is re-published, the scraper will work as-is.
+
+Live API response shape (JSON) when data is available:
     {
-        "dataList": [
+        "jsonList": [
             {
                 "term":           "11",
                 "sessionPeriod":  "1",
@@ -39,6 +44,7 @@ from scrapers.upsert import upsert_attendance
 log = logging.getLogger(__name__)
 
 _LY_URL = "https://data.ly.gov.tw/odw/openDatasetJson.action"
+_DATASET_ID = "36"
 _FETCH_TERMS = [10, 11]
 _PAGE_SIZE = 1000
 
@@ -74,13 +80,15 @@ def _legislator_uid(term: int, name: str) -> str:
     return f"{term}_{name}"
 
 
-async def _fetch_page(client: httpx.AsyncClient, term: int, offset: int) -> list[dict[str, Any]]:
+async def _fetch_page(
+    client: httpx.AsyncClient, term: int, page: int
+) -> list[dict[str, Any]]:
     resp = await client.get(
         _LY_URL,
         params={
-            "id": "36",
-            "fileType": "JSON",
-            "term": str(term),
+            "id": _DATASET_ID,
+            "selectTerm": f"{term:02d}",  # e.g. "10", "11"
+            "page": str(page),
         },
         headers=_HEADERS,
         timeout=30,
@@ -94,7 +102,15 @@ async def _fetch_page(client: httpx.AsyncClient, term: int, offset: int) -> list
 
 
 async def _fetch_term(client: httpx.AsyncClient, term: int) -> list[dict[str, Any]]:
-    return await _fetch_page(client, term, 0)
+    results: list[dict[str, Any]] = []
+    page = 1
+    while True:
+        page_data = await _fetch_page(client, term, page)
+        results.extend(page_data)
+        if len(page_data) < _PAGE_SIZE:
+            break
+        page += 1
+    return results
 
 
 def _load_fixture(term: int) -> list[dict[str, Any]] | None:
