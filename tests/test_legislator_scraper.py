@@ -29,6 +29,15 @@ def test_roc_date_conversion() -> None:
     assert dt.day == 1
 
 
+def test_western_date_conversion() -> None:
+    """Live API returns Western calendar dates like '2024/02/01'."""
+    dt = _roc_to_datetime("2024/02/01")
+    assert dt is not None
+    assert dt.year == 2024
+    assert dt.month == 2
+    assert dt.day == 1
+
+
 def test_roc_date_invalid_returns_none() -> None:
     assert _roc_to_datetime(None) is None
     assert _roc_to_datetime("") is None
