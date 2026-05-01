@@ -1,0 +1,14 @@
+{
+  "dataList": [
+    {"term":"11","sessionPeriod":"1","meetingTimes":"1","legislatorName":"柯建銘","interp":"請問行政院長，關於明年度預算編列，本院委員普遍認為社會福利預算不足，請問行政院有何具體因應措施？"},
+    {"term":"11","sessionPeriod":"1","meetingTimes":"2","legislatorName":"柯建銘","interp":"延續上次質詢，關於中央政府總預算案的審查進度，行政院是否已與各部會協調完畢？"},
+    {"term":"11","sessionPeriod":"1","meetingTimes":"3","legislatorName":"柯建銘","interp":"針對國防預算的編列，本委員認為應優先考量資安防護，請國防部說明相關預算規劃。"},
+    {"term":"11","sessionPeriod":"1","meetingTimes":"4","legislatorName":"柯建銘","interp":"關於教育預算不足的問題，尤其是偏鄉學校的資源分配，請教育部提出具體改善方案。"},
+    {"term":"11","sessionPeriod":"1","meetingTimes":"1","legislatorName":"韓國瑜","interp":"請問行政院長，目前兩岸關係緊張，政府有何具體的溝通管道與危機處理機制？"},
+    {"term":"11","sessionPeriod":"1","meetingTimes":"2","legislatorName":"韓國瑜","interp":"關於台灣的能源政策，廢核後的電力缺口如何填補？政府有明確的時間表嗎？"},
+    {"term":"11","sessionPeriod":"1","meetingTimes":"3","legislatorName":"韓國瑜","interp":"請問農委會，今年農產品出口受阻的問題，政府有何補救措施協助農民？"},
+    {"term":"11","sessionPeriod":"1","meetingTimes":"1","legislatorName":"王世堅","interp":"請問交通部，台北市捷運延伸線的建設計畫，目前進度為何，何時能完工通車？"},
+    {"term":"11","sessionPeriod":"1","meetingTimes":"2","legislatorName":"王世堅","interp":"關於都市更新政策，老舊建物的改建補助是否足夠？請內政部說明最新的補助方案。"},
+    {"term":"11","sessionPeriod":"1","meetingTimes":"3","legislatorName":"王世堅","interp":"針對近期社會住宅政策，請住都中心報告目前興建進度與未來規劃，以解決居住正義問題。"}
+  ]
+}

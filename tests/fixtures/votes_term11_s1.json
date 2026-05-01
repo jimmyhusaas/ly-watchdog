@@ -1,0 +1,21 @@
+{
+  "dataList": [
+    {"term":"11","sessionPeriod":"1","meetingTimes":"1","voteTimes":"1","voteDate":"113/02/19","billNo":"政府提案第17851號","billName":"行政院函請審議預算案","legislatorName":"韓國瑜","party":"中國國民黨","voteResult":"贊成"},
+    {"term":"11","sessionPeriod":"1","meetingTimes":"1","voteTimes":"1","voteDate":"113/02/19","billNo":"政府提案第17851號","billName":"行政院函請審議預算案","legislatorName":"江啟臣","party":"中國國民黨","voteResult":"贊成"},
+    {"term":"11","sessionPeriod":"1","meetingTimes":"1","voteTimes":"1","voteDate":"113/02/19","billNo":"政府提案第17851號","billName":"行政院函請審議預算案","legislatorName":"柯建銘","party":"民主進步黨","voteResult":"反對"},
+    {"term":"11","sessionPeriod":"1","meetingTimes":"1","voteTimes":"1","voteDate":"113/02/19","billNo":"政府提案第17851號","billName":"行政院函請審議預算案","legislatorName":"王世堅","party":"民主進步黨","voteResult":"反對"},
+    {"term":"11","sessionPeriod":"1","meetingTimes":"1","voteTimes":"1","voteDate":"113/02/19","billNo":"政府提案第17851號","billName":"行政院函請審議預算案","legislatorName":"陳椒華","party":"民主進步黨","voteResult":"反對"},
+
+    {"term":"11","sessionPeriod":"1","meetingTimes":"2","voteTimes":"1","voteDate":"113/02/26","billNo":"委員提案第35212號","billName":"立法委員提案修正案","legislatorName":"韓國瑜","party":"中國國民黨","voteResult":"贊成"},
+    {"term":"11","sessionPeriod":"1","meetingTimes":"2","voteTimes":"1","voteDate":"113/02/26","billNo":"委員提案第35212號","billName":"立法委員提案修正案","legislatorName":"江啟臣","party":"中國國民黨","voteResult":"贊成"},
+    {"term":"11","sessionPeriod":"1","meetingTimes":"2","voteTimes":"1","voteDate":"113/02/26","billNo":"委員提案第35212號","billName":"立法委員提案修正案","legislatorName":"柯建銘","party":"民主進步黨","voteResult":"贊成"},
+    {"term":"11","sessionPeriod":"1","meetingTimes":"2","voteTimes":"1","voteDate":"113/02/26","billNo":"委員提案第35212號","billName":"立法委員提案修正案","legislatorName":"王世堅","party":"民主進步黨","voteResult":"反對"},
+    {"term":"11","sessionPeriod":"1","meetingTimes":"2","voteTimes":"1","voteDate":"113/02/26","billNo":"委員提案第35212號","billName":"立法委員提案修正案","legislatorName":"陳椒華","party":"民主進步黨","voteResult":"反對"},
+
+    {"term":"11","sessionPeriod":"1","meetingTimes":"3","voteTimes":"1","voteDate":"113/03/04","billNo":"政府提案第17999號","billName":"行政院函請審議組織條例","legislatorName":"韓國瑜","party":"中國國民黨","voteResult":"贊成"},
+    {"term":"11","sessionPeriod":"1","meetingTimes":"3","voteTimes":"1","voteDate":"113/03/04","billNo":"政府提案第17999號","billName":"行政院函請審議組織條例","legislatorName":"江啟臣","party":"中國國民黨","voteResult":"反對"},
+    {"term":"11","sessionPeriod":"1","meetingTimes":"3","voteTimes":"1","voteDate":"113/03/04","billNo":"政府提案第17999號","billName":"行政院函請審議組織條例","legislatorName":"柯建銘","party":"民主進步黨","voteResult":"反對"},
+    {"term":"11","sessionPeriod":"1","meetingTimes":"3","voteTimes":"1","voteDate":"113/03/04","billNo":"政府提案第17999號","billName":"行政院函請審議組織條例","legislatorName":"王世堅","party":"民主進步黨","voteResult":"反對"},
+    {"term":"11","sessionPeriod":"1","meetingTimes":"3","voteTimes":"1","voteDate":"113/03/04","billNo":"政府提案第17999號","billName":"行政院函請審議組織條例","legislatorName":"陳椒華","party":"民主進步黨","voteResult":"反對"}
+  ]
+}

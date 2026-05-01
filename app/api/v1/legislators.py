@@ -24,8 +24,7 @@ async def list_legislators(
     as_of: datetime | None = Query(
         default=None,
         description=(
-            "ISO-8601 timestamp. 查詢『在該時點，系統記錄的立委資料快照』。"
-            "省略則回傳當前最新狀態。"
+            "ISO-8601 timestamp. 查詢在該時點系統記錄的立委資料快照。省略則回傳當前最新狀態。"
         ),
     ),
     session: AsyncSession = Depends(get_session),

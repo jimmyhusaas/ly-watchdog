@@ -15,11 +15,11 @@ import pytest
 from sqlalchemy import select
 
 from app.models.legislator import Legislator
-from scrapers.legislators import _load_fixture, _roc_to_datetime, _uid, run
+from scrapers.legislators import _load_fixture, _roc_to_datetime, run
 from scrapers.upsert import upsert_legislator
 
-
 # ── unit: helpers ─────────────────────────────────────────────────────────────
+
 
 def test_roc_date_conversion() -> None:
     dt = _roc_to_datetime("113/02/01")
@@ -55,6 +55,7 @@ def test_fixture_loads() -> None:
 
 # ── integration: upsert ────────────────────────────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_upsert_insert(db_session) -> None:
     now = datetime(2024, 2, 1, tzinfo=UTC)
@@ -72,9 +73,15 @@ async def test_upsert_insert(db_session) -> None:
     assert result == "inserted"
     await db_session.flush()
 
-    rows = (await db_session.execute(
-        select(Legislator).where(Legislator.legislator_uid == "test_insert_a001")
-    )).scalars().all()
+    rows = (
+        (
+            await db_session.execute(
+                select(Legislator).where(Legislator.legislator_uid == "test_insert_a001")
+            )
+        )
+        .scalars()
+        .all()
+    )
     assert len(rows) == 1
     assert rows[0].party == "民主進步黨"
     assert rows[0].superseded_at is None
@@ -109,9 +116,15 @@ async def test_upsert_unchanged(db_session) -> None:
     )
     assert result == "unchanged"
 
-    rows = (await db_session.execute(
-        select(Legislator).where(Legislator.legislator_uid == "test_unchanged_b001")
-    )).scalars().all()
+    rows = (
+        (
+            await db_session.execute(
+                select(Legislator).where(Legislator.legislator_uid == "test_unchanged_b001")
+            )
+        )
+        .scalars()
+        .all()
+    )
     assert len(rows) == 1
 
 
@@ -147,11 +160,17 @@ async def test_upsert_party_change_supersedes(db_session) -> None:
     assert result == "updated"
     await db_session.flush()
 
-    rows = (await db_session.execute(
-        select(Legislator)
-        .where(Legislator.legislator_uid == "test_party_change_c001")
-        .order_by(Legislator.recorded_at)
-    )).scalars().all()
+    rows = (
+        (
+            await db_session.execute(
+                select(Legislator)
+                .where(Legislator.legislator_uid == "test_party_change_c001")
+                .order_by(Legislator.recorded_at)
+            )
+        )
+        .scalars()
+        .all()
+    )
 
     assert len(rows) == 2
     old, new = rows
@@ -163,6 +182,7 @@ async def test_upsert_party_change_supersedes(db_session) -> None:
 
 
 # ── integration: full scraper run ─────────────────────────────────────────────
+
 
 @pytest.mark.asyncio
 async def test_full_run_fixture_inserts_all(clean_db) -> None:

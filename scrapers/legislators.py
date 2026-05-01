@@ -40,7 +40,7 @@ import json
 import logging
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import httpx
 
@@ -108,7 +108,7 @@ async def _fetch_page(
     data = resp.json()
     if not isinstance(data, dict):
         raise ValueError(f"Unexpected response type: {type(data)}")
-    return data.get("jsonList", [])
+    return cast(list[dict[str, Any]], data.get("jsonList", []))
 
 
 async def _fetch_all(client: httpx.AsyncClient) -> list[dict[str, Any]]:
@@ -137,7 +137,7 @@ def _load_fixture(term: int) -> list[dict[str, Any]] | None:
         return None
     data = json.loads(path.read_text())
     # Fixtures use the older "dataList" key
-    return data.get("dataList", data.get("jsonList", []))
+    return cast(list[dict[str, Any]], data.get("dataList", data.get("jsonList", [])))
 
 
 async def run(use_fixture: bool = False) -> dict[str, int]:

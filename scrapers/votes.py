@@ -1,26 +1,22 @@
-"""Scraper for 委員出缺席紀錄 (data.ly.gov.tw dataset id=36).
+"""Scraper for 立委院會表決個人明細 (data.ly.gov.tw dataset id=13).
 
 Run directly:
-    python -m scrapers.attendance [--fixture]
+    python -m scrapers.votes [--fixture]
 
-NOTE: As of 2025, dataset id=36 returns {"jsonList":[]} — the LY open-data
-platform has not published per-legislator attendance marks.  The scraper
-will run without error and report 0 records; fixture mode still works for
-tests.  When the dataset is re-published, the scraper will work as-is.
-
-Live API response shape (JSON) when data is available:
+API response shape (JSON):
     {
-        "jsonList": [
+        "dataList": [
             {
                 "term":           "11",
                 "sessionPeriod":  "1",
-                "sessionTimes":   "11011001",
                 "meetingTimes":   "1",
-                "meetingTypeName":"院會",
-                "meetingName":    "第11屆第1會期第1次院會",
-                "meetingDate":    "113/02/19",
+                "voteTimes":      "1",
+                "voteDate":       "113/02/19",
+                "billNo":         "政府提案第17851號",
+                "billName":       "行政院函請審議...",
                 "legislatorName": "柯建銘",
-                "attendMark":     "出席"
+                "party":          "民主進步黨",
+                "voteResult":     "贊成"
             },
             ...
         ]
@@ -39,12 +35,12 @@ from typing import Any, cast
 import httpx
 
 from app.database import get_sessionmaker
-from scrapers.upsert import upsert_attendance
+from scrapers.upsert import upsert_vote
 
 log = logging.getLogger(__name__)
 
+VOTES_DATASET_ID = 13  # change to 14 if the API uses a different dataset ID
 _LY_URL = "https://data.ly.gov.tw/odw/openDatasetJson.action"
-_DATASET_ID = "36"
 _FETCH_TERMS = [10, 11]
 _PAGE_SIZE = 1000
 
@@ -70,25 +66,23 @@ def _roc_to_date(date_str: str | None) -> date | None:
         return None
 
 
-def _attendance_uid(
-    term: int, session_period: int, meeting_type: str, meeting_times: int, legislator_name: str
+def _vote_uid(
+    term: int,
+    session_period: int,
+    meeting_times: int,
+    vote_times: int,
+    legislator_name: str,
 ) -> str:
-    return f"{term}_{session_period}_{meeting_type}_{meeting_times}_{legislator_name}"
+    return f"{term}_{session_period}_{meeting_times}_{vote_times}_{legislator_name}"
 
 
-def _legislator_uid(term: int, name: str) -> str:
-    return f"{term}_{name}"
-
-
-async def _fetch_page(
-    client: httpx.AsyncClient, term: int, page: int
-) -> list[dict[str, Any]]:
+async def _fetch_page(client: httpx.AsyncClient, term: int, offset: int) -> list[dict[str, Any]]:
     resp = await client.get(
         _LY_URL,
         params={
-            "id": _DATASET_ID,
-            "selectTerm": f"{term:02d}",  # e.g. "10", "11"
-            "page": str(page),
+            "id": str(VOTES_DATASET_ID),
+            "fileType": "JSON",
+            "term": str(term),
         },
         headers=_HEADERS,
         timeout=30,
@@ -102,19 +96,11 @@ async def _fetch_page(
 
 
 async def _fetch_term(client: httpx.AsyncClient, term: int) -> list[dict[str, Any]]:
-    results: list[dict[str, Any]] = []
-    page = 1
-    while True:
-        page_data = await _fetch_page(client, term, page)
-        results.extend(page_data)
-        if len(page_data) < _PAGE_SIZE:
-            break
-        page += 1
-    return results
+    return await _fetch_page(client, term, 0)
 
 
 def _load_fixture(term: int) -> list[dict[str, Any]] | None:
-    path = Path(__file__).parent.parent / "tests" / "fixtures" / f"attendance_term{term}_s1.json"
+    path = Path(__file__).parent.parent / "tests" / "fixtures" / f"votes_term{term}_s1.json"
     if not path.exists():
         return None
     return cast(list[dict[str, Any]], json.loads(path.read_text()).get("dataList", []))
@@ -127,7 +113,7 @@ async def run(use_fixture: bool = False) -> dict[str, int]:
 
     async with httpx.AsyncClient() as client:
         for term in _FETCH_TERMS:
-            log.info("Fetching attendance for term %d …", term)
+            log.info("Fetching votes for term %d …", term)
 
             if use_fixture:
                 rows = _load_fixture(term) or []
@@ -150,34 +136,35 @@ async def run(use_fixture: bool = False) -> dict[str, int]:
                     try:
                         sp = int(row.get("sessionPeriod") or 0)
                         mt = int(row.get("meetingTimes") or 0)
+                        vt = int(row.get("voteTimes") or 0)
                     except (ValueError, TypeError):
                         continue
 
-                    meeting_type = (row.get("meetingTypeName") or "").strip()
-                    meeting_date = _roc_to_date(row.get("meetingDate"))
-                    if meeting_date is None:
+                    vote_date = _roc_to_date(row.get("voteDate"))
+                    if vote_date is None:
                         continue
 
-                    uid = _attendance_uid(term, sp, meeting_type, mt, legislator_name)
+                    uid = _vote_uid(term, sp, mt, vt, legislator_name)
                     valid_from = datetime(
-                        meeting_date.year,
-                        meeting_date.month,
-                        meeting_date.day,
+                        vote_date.year,
+                        vote_date.month,
+                        vote_date.day,
                         tzinfo=UTC,
                     )
 
-                    result = await upsert_attendance(
+                    result = await upsert_vote(
                         session,
                         uid=uid,
                         term=term,
                         session_period=sp,
                         meeting_times=mt,
-                        meeting_type=meeting_type,
-                        meeting_name=(row.get("meetingName") or "").strip(),
-                        meeting_date=meeting_date,
-                        legislator_uid=_legislator_uid(term, legislator_name),
+                        vote_times=vt,
+                        vote_date=vote_date,
+                        bill_no=(row.get("billNo") or "").strip() or None,
+                        bill_name=(row.get("billName") or "").strip(),
                         legislator_name=legislator_name,
-                        attend_mark=(row.get("attendMark") or "").strip(),
+                        party=(row.get("party") or "").strip() or None,
+                        vote_result=(row.get("voteResult") or "").strip(),
                         valid_from=valid_from,
                         raw=row,
                         now=now,

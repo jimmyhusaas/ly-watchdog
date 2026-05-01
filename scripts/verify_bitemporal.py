@@ -11,22 +11,28 @@ Usage:
     python scripts/verify_bitemporal.py
 """
 
-import sys
 import json
-from datetime import datetime, timezone
-import psycopg2
-import urllib.request
+import sys
 import urllib.error
+import urllib.request
+from datetime import UTC, datetime
+
+import psycopg2
 
 # ── connection ────────────────────────────────────────────────────────────────
-DB = dict(host="localhost", port=5432, dbname="ly_watchdog",
-          user="watchdog", password="watchdog_dev")
+DB = {
+    "host": "localhost",
+    "port": 5432,
+    "dbname": "ly_watchdog",
+    "user": "watchdog",
+    "password": "watchdog_dev",
+}
 API = "http://localhost:8000"
 
 # ── time anchors ──────────────────────────────────────────────────────────────
-T1 = datetime(2024, 1, 1, tzinfo=timezone.utc)   # 第一筆資料生效
-T2 = datetime(2024, 6, 1, tzinfo=timezone.utc)   # 換黨後新資料記錄
-T3 = datetime(2025, 1, 1, tzinfo=timezone.utc)   # 立委離任
+T1 = datetime(2024, 1, 1, tzinfo=UTC)  # 第一筆資料生效
+T2 = datetime(2024, 6, 1, tzinfo=UTC)  # 換黨後新資料記錄
+T3 = datetime(2025, 1, 1, tzinfo=UTC)  # 立委離任
 
 PASS = "\033[32m✓\033[0m"
 FAIL = "\033[31m✗\033[0m"
@@ -60,18 +66,42 @@ def seed(cur) -> None:
     rows = [
         # uid        name   district party  term  valid_from  valid_to    recorded_at  superseded_at
         # Legislator A: joined T1, changed party at T2 (old row superseded)
-        ("A001", "王大明", "台北一", "民主進步黨", 11,
-         T1, None, T1, T2),           # old record, superseded at T2
-        ("A001", "王大明", "台北一", "台灣民眾黨", 11,
-         T1, None, T2, None),         # current record after party change
-
+        (
+            "A001",
+            "王大明",
+            "台北一",
+            "民主進步黨",
+            11,
+            T1,
+            None,
+            T1,
+            T2,
+        ),  # old record, superseded at T2
+        (
+            "A001",
+            "王大明",
+            "台北一",
+            "台灣民眾黨",
+            11,
+            T1,
+            None,
+            T2,
+            None,
+        ),  # current record after party change
         # Legislator B: joined T1, resigned at T3
-        ("B002", "李小花", "高雄三", "中國國民黨", 11,
-         T1, T3, T1, None),           # valid_to = T3 (resigned), still current knowledge
-
+        (
+            "B002",
+            "李小花",
+            "高雄三",
+            "中國國民黨",
+            11,
+            T1,
+            T3,
+            T1,
+            None,
+        ),  # valid_to = T3 (resigned), still current knowledge
         # Legislator C: 10th term, current
-        ("C003", "陳志遠", "不分區", "民主進步黨", 10,
-         T1, None, T1, None),
+        ("C003", "陳志遠", "不分區", "民主進步黨", 10, T1, None, T1, None),
     ]
 
     cur.executemany(
@@ -107,9 +137,7 @@ def test_current_state() -> None:
 
     # A001 must have the NEW party
     a001 = next((r for r in data if r["legislator_uid"] == "A001"), None)
-    check("A001 party is 台灣民眾黨",
-          a001 is not None and a001["party"] == "台灣民眾黨",
-          str(a001))
+    check("A001 party is 台灣民眾黨", a001 is not None and a001["party"] == "台灣民眾黨", str(a001))
 
 
 def test_as_of_before_party_change() -> None:
@@ -124,9 +152,7 @@ def test_as_of_before_party_change() -> None:
     check("C003 present", "C003" in uids)
 
     a001 = next((r for r in data if r["legislator_uid"] == "A001"), None)
-    check("A001 party is 民主進步黨",
-          a001 is not None and a001["party"] == "民主進步黨",
-          str(a001))
+    check("A001 party is 民主進步黨", a001 is not None and a001["party"] == "民主進步黨", str(a001))
 
 
 def test_as_of_after_party_change() -> None:
@@ -137,9 +163,7 @@ def test_as_of_after_party_change() -> None:
     uids = {r["legislator_uid"] for r in data}
 
     a001 = next((r for r in data if r["legislator_uid"] == "A001"), None)
-    check("A001 party is 台灣民眾黨",
-          a001 is not None and a001["party"] == "台灣民眾黨",
-          str(a001))
+    check("A001 party is 台灣民眾黨", a001 is not None and a001["party"] == "台灣民眾黨", str(a001))
     check("B002 still present (not resigned yet)", "B002" in uids)
 
 
@@ -157,18 +181,24 @@ def test_as_of_after_resignation() -> None:
 def test_filter_term() -> None:
     print("\n[6] Filter ?term=10")
     data = api_get("/v1/legislators?term=10")
-    check("only C003 returned",
-          len(data) == 1 and data[0]["legislator_uid"] == "C003",
-          str([r["legislator_uid"] for r in data]))
+    check(
+        "only C003 returned",
+        len(data) == 1 and data[0]["legislator_uid"] == "C003",
+        str([r["legislator_uid"] for r in data]),
+    )
 
 
 def test_filter_party() -> None:
     print("\n[7] Filter ?party=中國國民黨 (as_of when B002 was active)")
     ts = "2024-06-15T00:00:00Z"
-    data = api_get(f"/v1/legislators?party=%E4%B8%AD%E5%9C%8B%E5%9C%8B%E6%B0%91%E9%BB%A8&as_of={ts}")
-    check("only B002 returned",
-          len(data) == 1 and data[0]["legislator_uid"] == "B002",
-          str([r["legislator_uid"] for r in data]))
+    data = api_get(
+        f"/v1/legislators?party=%E4%B8%AD%E5%9C%8B%E5%9C%8B%E6%B0%91%E9%BB%A8&as_of={ts}"
+    )
+    check(
+        "only B002 returned",
+        len(data) == 1 and data[0]["legislator_uid"] == "B002",
+        str([r["legislator_uid"] for r in data]),
+    )
 
 
 # ── main ──────────────────────────────────────────────────────────────────────

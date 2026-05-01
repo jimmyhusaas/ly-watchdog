@@ -1,26 +1,17 @@
-"""Scraper for 委員出缺席紀錄 (data.ly.gov.tw dataset id=36).
+"""Scraper for 質詢事項 (data.ly.gov.tw dataset id=8).
 
 Run directly:
-    python -m scrapers.attendance [--fixture]
+    python -m scrapers.interpellations [--fixture]
 
-NOTE: As of 2025, dataset id=36 returns {"jsonList":[]} — the LY open-data
-platform has not published per-legislator attendance marks.  The scraper
-will run without error and report 0 records; fixture mode still works for
-tests.  When the dataset is re-published, the scraper will work as-is.
-
-Live API response shape (JSON) when data is available:
+API response shape (JSON):
     {
-        "jsonList": [
+        "dataList": [
             {
-                "term":           "11",
-                "sessionPeriod":  "1",
-                "sessionTimes":   "11011001",
-                "meetingTimes":   "1",
-                "meetingTypeName":"院會",
-                "meetingName":    "第11屆第1會期第1次院會",
-                "meetingDate":    "113/02/19",
-                "legislatorName": "柯建銘",
-                "attendMark":     "出席"
+                "term":          "11",
+                "sessionPeriod": "1",
+                "meetingTimes":  "1",
+                "legislatorName":"柯建銘",
+                "interp":        "質詢內容文字..."
             },
             ...
         ]
@@ -32,19 +23,19 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-from datetime import UTC, date, datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, cast
 
 import httpx
 
 from app.database import get_sessionmaker
-from scrapers.upsert import upsert_attendance
+from scrapers.upsert import upsert_interpellation
 
 log = logging.getLogger(__name__)
 
+INTERPS_DATASET_ID = 8
 _LY_URL = "https://data.ly.gov.tw/odw/openDatasetJson.action"
-_DATASET_ID = "36"
 _FETCH_TERMS = [10, 11]
 _PAGE_SIZE = 1000
 
@@ -60,35 +51,22 @@ _HEADERS = {
 }
 
 
-def _roc_to_date(date_str: str | None) -> date | None:
-    if not date_str:
-        return None
-    try:
-        parts = date_str.split("/")
-        return date(int(parts[0]) + 1911, int(parts[1]), int(parts[2]))
-    except (ValueError, IndexError, AttributeError):
-        return None
-
-
-def _attendance_uid(
-    term: int, session_period: int, meeting_type: str, meeting_times: int, legislator_name: str
+def _interp_uid(
+    term: int,
+    session_period: int,
+    meeting_times: int,
+    legislator_name: str,
 ) -> str:
-    return f"{term}_{session_period}_{meeting_type}_{meeting_times}_{legislator_name}"
+    return f"{term}_{session_period}_{meeting_times}_{legislator_name}"
 
 
-def _legislator_uid(term: int, name: str) -> str:
-    return f"{term}_{name}"
-
-
-async def _fetch_page(
-    client: httpx.AsyncClient, term: int, page: int
-) -> list[dict[str, Any]]:
+async def _fetch_page(client: httpx.AsyncClient, term: int, offset: int) -> list[dict[str, Any]]:
     resp = await client.get(
         _LY_URL,
         params={
-            "id": _DATASET_ID,
-            "selectTerm": f"{term:02d}",  # e.g. "10", "11"
-            "page": str(page),
+            "id": str(INTERPS_DATASET_ID),
+            "fileType": "JSON",
+            "term": str(term),
         },
         headers=_HEADERS,
         timeout=30,
@@ -102,19 +80,13 @@ async def _fetch_page(
 
 
 async def _fetch_term(client: httpx.AsyncClient, term: int) -> list[dict[str, Any]]:
-    results: list[dict[str, Any]] = []
-    page = 1
-    while True:
-        page_data = await _fetch_page(client, term, page)
-        results.extend(page_data)
-        if len(page_data) < _PAGE_SIZE:
-            break
-        page += 1
-    return results
+    return await _fetch_page(client, term, 0)
 
 
 def _load_fixture(term: int) -> list[dict[str, Any]] | None:
-    path = Path(__file__).parent.parent / "tests" / "fixtures" / f"attendance_term{term}_s1.json"
+    path = (
+        Path(__file__).parent.parent / "tests" / "fixtures" / f"interpellations_term{term}_s1.json"
+    )
     if not path.exists():
         return None
     return cast(list[dict[str, Any]], json.loads(path.read_text()).get("dataList", []))
@@ -127,7 +99,7 @@ async def run(use_fixture: bool = False) -> dict[str, int]:
 
     async with httpx.AsyncClient() as client:
         for term in _FETCH_TERMS:
-            log.info("Fetching attendance for term %d …", term)
+            log.info("Fetching interpellations for term %d ...", term)
 
             if use_fixture:
                 rows = _load_fixture(term) or []
@@ -147,38 +119,27 @@ async def run(use_fixture: bool = False) -> dict[str, int]:
                     if not legislator_name:
                         continue
 
+                    interp_content = (row.get("interp") or "").strip()
+                    if not interp_content:
+                        continue
+
                     try:
                         sp = int(row.get("sessionPeriod") or 0)
                         mt = int(row.get("meetingTimes") or 0)
                     except (ValueError, TypeError):
                         continue
 
-                    meeting_type = (row.get("meetingTypeName") or "").strip()
-                    meeting_date = _roc_to_date(row.get("meetingDate"))
-                    if meeting_date is None:
-                        continue
+                    uid = _interp_uid(term, sp, mt, legislator_name)
 
-                    uid = _attendance_uid(term, sp, meeting_type, mt, legislator_name)
-                    valid_from = datetime(
-                        meeting_date.year,
-                        meeting_date.month,
-                        meeting_date.day,
-                        tzinfo=UTC,
-                    )
-
-                    result = await upsert_attendance(
+                    result = await upsert_interpellation(
                         session,
                         uid=uid,
                         term=term,
                         session_period=sp,
                         meeting_times=mt,
-                        meeting_type=meeting_type,
-                        meeting_name=(row.get("meetingName") or "").strip(),
-                        meeting_date=meeting_date,
-                        legislator_uid=_legislator_uid(term, legislator_name),
                         legislator_name=legislator_name,
-                        attend_mark=(row.get("attendMark") or "").strip(),
-                        valid_from=valid_from,
+                        interp_content=interp_content,
+                        valid_from=now,
                         raw=row,
                         now=now,
                     )
@@ -195,6 +156,6 @@ if __name__ == "__main__":
 
     logging.basicConfig(
         level=logging.INFO,
-        format="%(asctime)s %(levelname)s %(name)s — %(message)s",
+        format="%(asctime)s %(levelname)s %(name)s - %(message)s",
     )
     asyncio.run(run(use_fixture="--fixture" in sys.argv))

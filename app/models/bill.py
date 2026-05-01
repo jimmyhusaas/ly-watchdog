@@ -1,22 +1,22 @@
-"""Bi-temporal attendance record model.
+"""Bi-temporal bill record model.
 
-One row = one legislator's attendance mark at one meeting.
+One row = one bill (議案) at a given audit snapshot.
 
-Natural key (attendance_uid):
-    "{term}_{session_period}_{meeting_type}_{meeting_times}_{legislator_name}"
+Natural key (bill_uid):
+    "{term}_{session_period}_{bill_no}"
 
-Bi-temporal columns follow the same pattern as the legislators table:
+Bi-temporal columns follow the same pattern as the other tables:
     valid_from / valid_to        — business time (when the fact is true IRL)
     recorded_at / superseded_at  — transaction time (when the system knew it)
 """
 
 from __future__ import annotations
 
-from datetime import date, datetime
+from datetime import datetime
 from typing import Any
 from uuid import UUID, uuid4
 
-from sqlalchemy import Date, DateTime, Index, Integer, String, func
+from sqlalchemy import DateTime, Index, Integer, String, Text, func
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column
@@ -24,8 +24,8 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.models.base import Base
 
 
-class Attendance(Base):
-    __tablename__ = "attendance"
+class Bill(Base):
+    __tablename__ = "bills"
 
     # --- Surrogate key ---
     id: Mapped[UUID] = mapped_column(
@@ -35,23 +35,19 @@ class Attendance(Base):
     )
 
     # --- Natural business key ---
-    attendance_uid: Mapped[str] = mapped_column(String(256), nullable=False)
+    bill_uid: Mapped[str] = mapped_column(String(512), nullable=False)
 
-    # --- Meeting context ---
+    # --- Bill context ---
     term: Mapped[int] = mapped_column(Integer, nullable=False)
     session_period: Mapped[int] = mapped_column(Integer, nullable=False)
-    meeting_times: Mapped[int] = mapped_column(Integer, nullable=False)
-    meeting_type: Mapped[str] = mapped_column(String(64), nullable=False)  # 院會 / 委員會
-    meeting_name: Mapped[str] = mapped_column(String(256), nullable=False)
-    meeting_date: Mapped[date] = mapped_column(Date, nullable=False)
+    bill_no: Mapped[str] = mapped_column(String(128), nullable=False)
+    bill_name: Mapped[str] = mapped_column(Text, nullable=False)
+    bill_org: Mapped[str | None] = mapped_column(String(256), nullable=True)
+    bill_proposer: Mapped[str | None] = mapped_column(Text, nullable=True)
+    bill_cosignatory: Mapped[str | None] = mapped_column(Text, nullable=True)
 
-    # --- Legislator ---
-    legislator_uid: Mapped[str] = mapped_column(String(64), nullable=False)
-    legislator_name: Mapped[str] = mapped_column(String(128), nullable=False)
-
-    # --- Attendance mark ---
-    attend_mark: Mapped[str] = mapped_column(String(16), nullable=False)
-    # 出席 | 缺席 | 請假 | 公假 | 列席
+    # --- Status (the field that changes over time) ---
+    bill_status: Mapped[str] = mapped_column(String(128), nullable=False)
 
     # --- Original payload ---
     raw_data: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
@@ -70,10 +66,10 @@ class Attendance(Base):
 
     __table_args__ = (
         Index(
-            "ix_attendance_current",
-            "attendance_uid",
+            "ix_bills_current",
+            "bill_uid",
             postgresql_where="superseded_at IS NULL",
         ),
-        Index("ix_attendance_legislator", "legislator_uid"),
-        Index("ix_attendance_term_session", "term", "session_period"),
+        Index("ix_bills_term_session", "term", "session_period"),
+        Index("ix_bills_status", "bill_status"),
     )
