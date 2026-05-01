@@ -164,8 +164,7 @@ async def run(use_fixture: bool = False) -> dict[str, int]:
                 return stats
 
     # ── upsert ────────────────────────────────────────────────────────────────
-    async with session_factory() as session:
-        async with session.begin():
+    async with session_factory() as session, session.begin():
             for row in all_rows:
                 name = (row.get("name") or "").strip()
                 if not name:
