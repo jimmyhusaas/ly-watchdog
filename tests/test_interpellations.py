@@ -82,7 +82,9 @@ async def test_interp_upsert_correction(db_session) -> None:
     }
     await upsert_interpellation(db_session, interp_content="原始質詢內容", now=t1, **base)
     await db_session.flush()
-    result = await upsert_interpellation(db_session, interp_content="修正後質詢內容", now=t2, **base)
+    result = await upsert_interpellation(
+        db_session, interp_content="修正後質詢內容", now=t2, **base
+    )
     assert result == "updated"
 
 

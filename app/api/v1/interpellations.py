@@ -13,9 +13,7 @@ from app.schemas.interpellation import InterpellationRead
 router = APIRouter(prefix="/interpellations", tags=["interpellations"])
 
 
-def _temporal_filter(
-    model: type[Interpellation], as_of: datetime | None
-) -> ColumnElement[bool]:
+def _temporal_filter(model: type[Interpellation], as_of: datetime | None) -> ColumnElement[bool]:
     if as_of is None:
         return and_(
             model.valid_to.is_(None),
