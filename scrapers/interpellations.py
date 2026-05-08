@@ -1,17 +1,28 @@
-"""Scraper for 質詢事項 (data.ly.gov.tw dataset id=8).
+"""Scraper for 院會發言紀錄 (data.ly.gov.tw dataset id=7).
+
+Covers 委員在院會的發言內容，包含質詢、討論等各類發言。
 
 Run directly:
     python -m scrapers.interpellations [--fixture]
 
-API response shape (JSON):
+NOTE: Originally targeted dataset id=8 (公報委員會紀錄, committee gazette),
+which has no per-legislator fields.  Corrected to id=7 (院會發言紀錄) which
+provides legislatorName + full speech content.
+
+Live API response shape (JSON):
     {
-        "dataList": [
+        "jsonList": [
             {
-                "term":          "11",
-                "sessionPeriod": "1",
-                "meetingTimes":  "1",
-                "legislatorName":"柯建銘",
-                "interp":        "質詢內容文字..."
+                "term":           "11",
+                "sessionPeriod":  "1",
+                "meetingTimes":   "1",
+                "selectTerm":     "1101",
+                "legislatorName": "柯建銘",
+                "speakType":      "質詢",
+                "content":        "發言內容文字...",
+                "dateTimeDesc":   "...",
+                "meetingRoom":    "議場",
+                "chairman":       "..."
             },
             ...
         ]
@@ -34,9 +45,9 @@ from scrapers.upsert import upsert_interpellation
 
 log = logging.getLogger(__name__)
 
-INTERPS_DATASET_ID = 8
+INTERPS_DATASET_ID = 7  # 院會發言紀錄 (id=8 is committee gazette, no per-legislator fields)
 _LY_URL = "https://data.ly.gov.tw/odw/openDatasetJson.action"
-_FETCH_TERMS = [10, 11]
+_FETCH_TERMS: frozenset[int] = frozenset([10, 11])
 _PAGE_SIZE = 1000
 
 _HEADERS = {
@@ -51,6 +62,12 @@ _HEADERS = {
 }
 
 
+def _to_int(v: Any) -> int:
+    """Parse int from a value that may be None, 0, or the string 'null'."""
+    s = str(v or "").strip()
+    return int(s) if s and s.lower() not in ("null", "none") else 0
+
+
 def _interp_uid(
     term: int,
     session_period: int,
@@ -60,16 +77,16 @@ def _interp_uid(
     return f"{term}_{session_period}_{meeting_times}_{legislator_name}"
 
 
-async def _fetch_page(client: httpx.AsyncClient, term: int, offset: int) -> list[dict[str, Any]]:
+async def _fetch_page(client: httpx.AsyncClient, page: int) -> list[dict[str, Any]]:
     resp = await client.get(
         _LY_URL,
         params={
             "id": str(INTERPS_DATASET_ID),
-            "fileType": "JSON",
-            "term": str(term),
+            "selectTerm": "all",
+            "page": str(page),
         },
         headers=_HEADERS,
-        timeout=30,
+        timeout=60,
         follow_redirects=True,
     )
     resp.raise_for_status()
@@ -79,8 +96,18 @@ async def _fetch_page(client: httpx.AsyncClient, term: int, offset: int) -> list
     return cast(list[dict[str, Any]], data.get("jsonList", []))
 
 
-async def _fetch_term(client: httpx.AsyncClient, term: int) -> list[dict[str, Any]]:
-    return await _fetch_page(client, term, 0)
+async def _fetch_all(client: httpx.AsyncClient) -> list[dict[str, Any]]:
+    """Paginate through all records."""
+    results: list[dict[str, Any]] = []
+    page = 1
+    while True:
+        page_data = await _fetch_page(client, page)
+        results.extend(page_data)
+        log.debug("Page %d: %d records", page, len(page_data))
+        if len(page_data) < _PAGE_SIZE:
+            break
+        page += 1
+    return results
 
 
 def _load_fixture(term: int) -> list[dict[str, Any]] | None:
@@ -97,55 +124,65 @@ async def run(use_fixture: bool = False) -> dict[str, int]:
     stats: dict[str, int] = {"inserted": 0, "updated": 0, "unchanged": 0, "errors": 0}
     session_factory = get_sessionmaker()
 
-    async with httpx.AsyncClient() as client:
-        for term in _FETCH_TERMS:
-            log.info("Fetching interpellations for term %d ...", term)
+    # ── collect rows ──────────────────────────────────────────────────────────
+    all_rows: list[dict[str, Any]] = []
 
-            if use_fixture:
-                rows = _load_fixture(term) or []
-                log.info("Term %d: %d records loaded from fixture", term, len(rows))
-            else:
-                try:
-                    rows = await _fetch_term(client, term)
-                except Exception:
-                    log.exception("Failed to fetch term %d", term)
-                    stats["errors"] += 1
-                    continue
-                log.info("Term %d: %d records fetched", term, len(rows))
+    if use_fixture:
+        for term in sorted(_FETCH_TERMS):
+            rows = _load_fixture(term) or []
+            log.info("Term %d: %d records loaded from fixture", term, len(rows))
+            all_rows.extend(rows)
+    else:
+        async with httpx.AsyncClient() as client:
+            try:
+                all_rows = await _fetch_all(client)
+                log.info("Fetched %d total records from live API", len(all_rows))
+            except Exception:
+                log.exception("Failed to fetch interpellations")
+                stats["errors"] += 1
+                return stats
 
-            async with session_factory() as session, session.begin():
-                for row in rows:
-                    legislator_name = (row.get("legislatorName") or "").strip()
-                    if not legislator_name:
-                        continue
+    # ── upsert ────────────────────────────────────────────────────────────────
+    async with session_factory() as session, session.begin():
+        for row in all_rows:
+            legislator_name = (row.get("legislatorName") or "").strip()
+            if not legislator_name:
+                continue
 
-                    interp_content = (row.get("interp") or "").strip()
-                    if not interp_content:
-                        continue
+            # Live API uses "content"; fixture may use "interp" (legacy key)
+            interp_content = (row.get("content") or row.get("interp") or "").strip()
+            if not interp_content:
+                continue
 
-                    try:
-                        sp = int(row.get("sessionPeriod") or 0)
-                        mt = int(row.get("meetingTimes") or 0)
-                    except (ValueError, TypeError):
-                        continue
+            try:
+                term = int(row.get("term") or 0)
+            except (TypeError, ValueError):
+                continue
 
-                    uid = _interp_uid(term, sp, mt, legislator_name)
+            if term not in _FETCH_TERMS:
+                continue
 
-                    result = await upsert_interpellation(
-                        session,
-                        uid=uid,
-                        term=term,
-                        session_period=sp,
-                        meeting_times=mt,
-                        legislator_name=legislator_name,
-                        interp_content=interp_content,
-                        valid_from=now,
-                        raw=row,
-                        now=now,
-                    )
-                    stats[result] += 1
+            try:
+                sp = _to_int(row.get("sessionPeriod"))
+                mt = _to_int(row.get("meetingTimes"))
+            except (ValueError, TypeError):
+                continue
 
-            log.info("Term %d done. stats so far: %s", term, stats)
+            uid = _interp_uid(term, sp, mt, legislator_name)
+
+            result = await upsert_interpellation(
+                session,
+                uid=uid,
+                term=term,
+                session_period=sp,
+                meeting_times=mt,
+                legislator_name=legislator_name,
+                interp_content=interp_content,
+                valid_from=now,
+                raw=row,
+                now=now,
+            )
+            stats[result] += 1
 
     log.info("Scrape complete: %s", stats)
     return stats

@@ -55,17 +55,23 @@ _HEADERS = {
 }
 
 
+def _to_int(v: Any) -> int:
+    """Parse int from a value that may be None, 0, or the string 'null'."""
+    s = str(v or "").strip()
+    return int(s) if s and s.lower() not in ("null", "none") else 0
+
+
 def _bill_uid(term: int, session_period: int, bill_no: str) -> str:
     return f"{term}_{session_period}_{bill_no}"
 
 
-async def _fetch_page(client: httpx.AsyncClient, term: int, offset: int) -> list[dict[str, Any]]:
+async def _fetch_page(client: httpx.AsyncClient, page: int) -> list[dict[str, Any]]:
     resp = await client.get(
         _LY_URL,
         params={
             "id": str(BILLS_DATASET_ID),
-            "fileType": "JSON",
-            "term": str(term),
+            "selectTerm": "all",
+            "page": str(page),
         },
         headers=_HEADERS,
         timeout=120,
@@ -78,8 +84,18 @@ async def _fetch_page(client: httpx.AsyncClient, term: int, offset: int) -> list
     return cast(list[dict[str, Any]], data.get("jsonList", []))
 
 
-async def _fetch_term(client: httpx.AsyncClient, term: int) -> list[dict[str, Any]]:
-    return await _fetch_page(client, term, 0)
+async def _fetch_all(client: httpx.AsyncClient) -> list[dict[str, Any]]:
+    """Paginate through all records across all terms."""
+    results: list[dict[str, Any]] = []
+    page = 1
+    while True:
+        page_data = await _fetch_page(client, page)
+        results.extend(page_data)
+        log.debug("Page %d: %d records", page, len(page_data))
+        if len(page_data) < _PAGE_SIZE:
+            break
+        page += 1
+    return results
 
 
 def _load_fixture(term: int) -> list[dict[str, Any]] | None:
@@ -89,66 +105,74 @@ def _load_fixture(term: int) -> list[dict[str, Any]] | None:
     return cast(list[dict[str, Any]], json.loads(path.read_text()).get("dataList", []))
 
 
+_FETCH_TERMS_SET: frozenset[int] = frozenset(_FETCH_TERMS)
+
+
 async def run(use_fixture: bool = False) -> dict[str, int]:
     now = datetime.now(UTC)
     stats: dict[str, int] = {"inserted": 0, "updated": 0, "unchanged": 0, "errors": 0}
     session_factory = get_sessionmaker()
 
-    async with httpx.AsyncClient() as client:
-        for term in _FETCH_TERMS:
-            log.info("Fetching bills for term %d ...", term)
+    # ── collect rows ──────────────────────────────────────────────────────────
+    all_rows: list[dict[str, Any]] = []
 
-            if use_fixture:
-                rows = _load_fixture(term) or []
-                log.info("Term %d: %d records loaded from fixture", term, len(rows))
-            else:
-                try:
-                    rows = await _fetch_term(client, term)
-                except Exception:
-                    log.exception("Failed to fetch term %d", term)
-                    stats["errors"] += 1
-                    continue
-                log.info("Term %d: %d records fetched", term, len(rows))
+    if use_fixture:
+        for term in sorted(_FETCH_TERMS):
+            rows = _load_fixture(term) or []
+            log.info("Term %d: %d records loaded from fixture", term, len(rows))
+            all_rows.extend(rows)
+    else:
+        async with httpx.AsyncClient() as client:
+            try:
+                all_rows = await _fetch_all(client)
+                log.info("Fetched %d total records from live API", len(all_rows))
+            except Exception:
+                log.exception("Failed to fetch bills")
+                stats["errors"] += 1
+                return stats
 
-            async with session_factory() as session, session.begin():
-                for row in rows:
-                    # API does not filter by term server-side; skip mismatched rows
-                    if str(row.get("term") or "") != str(term):
-                        continue
+    # ── upsert ────────────────────────────────────────────────────────────────
+    async with session_factory() as session, session.begin():
+        for row in all_rows:
+            try:
+                term = int(row.get("term") or 0)
+            except (TypeError, ValueError):
+                continue
 
-                    bill_no = (row.get("billNo") or "").strip()
-                    if not bill_no:
-                        continue
+            if term not in _FETCH_TERMS_SET:
+                continue
 
-                    try:
-                        sp = int(row.get("sessionPeriod") or 0)
-                    except (ValueError, TypeError):
-                        continue
+            bill_no = (row.get("billNo") or "").strip()
+            if not bill_no:
+                continue
 
-                    bill_status = (row.get("billStatus") or "").strip()
-                    if not bill_status:
-                        continue
+            try:
+                sp = _to_int(row.get("sessionPeriod"))
+            except (ValueError, TypeError):
+                continue
 
-                    uid = _bill_uid(term, sp, bill_no)
+            bill_status = (row.get("billStatus") or "").strip()
+            if not bill_status:
+                continue
 
-                    result = await upsert_bill(
-                        session,
-                        uid=uid,
-                        term=term,
-                        session_period=sp,
-                        bill_no=bill_no,
-                        bill_name=(row.get("billName") or "").strip(),
-                        bill_org=(row.get("billOrg") or "").strip() or None,
-                        bill_proposer=(row.get("billProposer") or "").strip() or None,
-                        bill_cosignatory=(row.get("billCosignatory") or "").strip() or None,
-                        bill_status=bill_status,
-                        valid_from=now,
-                        raw=row,
-                        now=now,
-                    )
-                    stats[result] += 1
+            uid = _bill_uid(term, sp, bill_no)
 
-            log.info("Term %d done. stats so far: %s", term, stats)
+            result = await upsert_bill(
+                session,
+                uid=uid,
+                term=term,
+                session_period=sp,
+                bill_no=bill_no,
+                bill_name=(row.get("billName") or "").strip(),
+                bill_org=(row.get("billOrg") or "").strip() or None,
+                bill_proposer=(row.get("billProposer") or "").strip() or None,
+                bill_cosignatory=(row.get("billCosignatory") or "").strip() or None,
+                bill_status=bill_status,
+                valid_from=now,
+                raw=row,
+                now=now,
+            )
+            stats[result] += 1
 
     log.info("Scrape complete: %s", stats)
     return stats
