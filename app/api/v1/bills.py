@@ -30,17 +30,19 @@ def _temporal_filter(model: type[Bill], as_of: datetime | None) -> ColumnElement
 @router.get(
     "",
     response_model=list[BillRead],
-    summary="法案列表 (by term, optional as-of)",
+    summary="法案列表 (by term, optional as-of, paginated)",
 )
 async def list_bills(
     term: int = Query(description="屆別"),
     session_period: int | None = Query(default=None, description="會期篩選"),
     bill_status: str | None = Query(default=None, description="審查進度篩選"),
-    bill_proposer: str | None = Query(default=None, description="提案委員姓名篩選"),
+    bill_proposer: str | None = Query(default=None, description="提案委員姓名篩選 (模糊比對)"),
     as_of: datetime | None = Query(
         default=None,
         description="ISO-8601 timestamp - 時間旅行查詢; 省略則回傳當前最新狀態",
     ),
+    limit: int = Query(default=50, ge=1, le=500, description="每頁筆數 (max 500)"),
+    offset: int = Query(default=0, ge=0, description="跳過筆數"),
     session: AsyncSession = Depends(get_session),
 ) -> list[BillRead]:
     temporal_filter = _temporal_filter(Bill, as_of)
@@ -54,7 +56,7 @@ async def list_bills(
     if bill_proposer is not None:
         stmt = stmt.where(Bill.bill_proposer.ilike(f"%{bill_proposer}%"))
 
-    stmt = stmt.order_by(Bill.bill_no)
+    stmt = stmt.order_by(Bill.session_period, Bill.bill_no).limit(limit).offset(offset)
 
     rows = (await session.execute(stmt)).scalars().all()
     return [BillRead.model_validate(r) for r in rows]

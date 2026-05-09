@@ -28,3 +28,10 @@ class LegislatorRead(BaseModel):
         default=None,
         description="null 表示系統目前仍以此筆為該立委的記錄",
     )
+
+
+class LegislatorDetail(LegislatorRead):
+    """立委個人頁 — 基本資料 + 活動統計。"""
+
+    bill_count: int = Field(description="本屆提案數 (含連署)")
+    speech_count: int = Field(description="本屆院會發言次數")
