@@ -1,9 +1,10 @@
 """Legislator endpoints with bi-temporal "as-of" support."""
 
 from datetime import datetime
+from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import and_, func, or_, select
+from sqlalchemy import ColumnElement, and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_session
@@ -17,14 +18,14 @@ from app.schemas.legislator import LegislatorDetail, LegislatorRead
 router = APIRouter(prefix="/legislators", tags=["legislators"])
 
 
-def _current_filter(model: type) -> object:  # type: ignore[type-arg]
+def _current_filter(model: Any) -> ColumnElement[bool]:
     return and_(
         model.valid_to.is_(None),
         model.superseded_at.is_(None),
     )
 
 
-def _as_of_filter(model: type, as_of: datetime) -> object:  # type: ignore[type-arg]
+def _as_of_filter(model: Any, as_of: datetime) -> ColumnElement[bool]:
     return and_(
         model.valid_from <= as_of,
         or_(model.valid_to.is_(None), model.valid_to > as_of),
