@@ -1,6 +1,6 @@
 """Scraper for 院會發言紀錄 (data.ly.gov.tw dataset id=7).
 
-Covers 委員在院會的發言內容，包含質詢、討論等各類發言。
+Covers 委員在院會的發言內容, 包含質詢、討論等各類發言。
 
 Run directly:
     python -m scrapers.interpellations [--fixture]
