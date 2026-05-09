@@ -1,0 +1,56 @@
+name: Scrape
+
+on:
+  schedule:
+    # 每天 02:00 台灣時間 (UTC+8 = 18:00 UTC 前一天)
+    - cron: "0 18 * * *"
+  workflow_dispatch: # 手動觸發
+
+concurrency:
+  group: scrape
+  cancel-in-progress: false # 不中斷進行中的 scrape
+
+jobs:
+  scrape:
+    name: Run all scrapers → Neon
+    runs-on: ubuntu-latest
+    timeout-minutes: 45 # bills 需要約 15 分鐘下載 35 頁
+
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "0.5.1"
+
+      - name: Set up Python 3.12
+        run: uv python install 3.12
+
+      - name: Install deps
+        run: |
+          uv venv
+          uv pip install -e ".[dev]"
+
+      # 立委基本資料（快，243 筆）
+      - name: Scrape legislators
+        run: uv run python -m scrapers.legislators
+
+      # 院會發言（快，~718 筆）
+      - name: Scrape interpellations
+        run: uv run python -m scrapers.interpellations
+
+      # 法案（慢，需下載 35 頁共 34,000+ 筆）
+      - name: Scrape bills
+        run: uv run python -m scrapers.bills
+
+      # 出席紀錄（目前 API 未公開，0 筆，快速完成）
+      - name: Scrape attendance
+        run: uv run python -m scrapers.attendance
+
+      - name: Summary
+        if: always()
+        run: echo "Scrape workflow completed at $(date -u '+%Y-%m-%d %H:%M UTC')"
