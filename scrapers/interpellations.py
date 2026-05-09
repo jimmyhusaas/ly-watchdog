@@ -32,6 +32,7 @@ Live API response shape (JSON):
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import json
 import logging
 from datetime import UTC, datetime
@@ -71,10 +72,14 @@ def _to_int(v: Any) -> int:
 def _interp_uid(
     term: int,
     session_period: int,
-    meeting_times: int,
+    session_times: str,
     legislator_name: str,
+    content: str,
 ) -> str:
-    return f"{term}_{session_period}_{meeting_times}_{legislator_name}"
+    # sessionTimes differentiates meetings; content hash differentiates multiple
+    # speeches by the same person at the same meeting (e.g. point-of-order + speech).
+    content_hash = hashlib.md5(content[:500].encode()).hexdigest()[:8]
+    return f"{term}_{session_period}_{session_times}_{legislator_name}_{content_hash}"
 
 
 async def _fetch_page(client: httpx.AsyncClient, page: int) -> list[dict[str, Any]]:
@@ -143,6 +148,7 @@ async def run(use_fixture: bool = False) -> dict[str, int]:
                 return stats
 
     # ── upsert ────────────────────────────────────────────────────────────────
+    seen_uids: set[str] = set()
     async with session_factory() as session, session.begin():
         for row in all_rows:
             legislator_name = (row.get("legislatorName") or "").strip()
@@ -168,7 +174,15 @@ async def run(use_fixture: bool = False) -> dict[str, int]:
             except (ValueError, TypeError):
                 continue
 
-            uid = _interp_uid(term, sp, mt, legislator_name)
+            # sessionTimes is always populated (e.g. "01"); meetingTimes is often null
+            session_times = (row.get("sessionTimes") or "00").strip()
+            uid = _interp_uid(term, sp, session_times, legislator_name, interp_content)
+
+            # Skip exact duplicates within the same batch (identical source records)
+            if uid in seen_uids:
+                log.debug("Skipping duplicate UID %s", uid)
+                continue
+            seen_uids.add(uid)
 
             result = await upsert_interpellation(
                 session,
