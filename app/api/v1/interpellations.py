@@ -30,17 +30,19 @@ def _temporal_filter(model: type[Interpellation], as_of: datetime | None) -> Col
 @router.get(
     "",
     response_model=list[InterpellationRead],
-    summary="質詢紀錄列表 (by term, optional keyword search and as-of)",
+    summary="院會發言紀錄列表 (by term, optional keyword search, as-of, paginated)",
 )
 async def list_interpellations(
     term: int = Query(description="屆別"),
     session_period: int | None = Query(default=None, description="會期篩選"),
     legislator_name: str | None = Query(default=None, description="立委姓名篩選"),
-    keyword: str | None = Query(default=None, description="質詢內容關鍵字搜尋"),
+    keyword: str | None = Query(default=None, description="發言內容關鍵字搜尋"),
     as_of: datetime | None = Query(
         default=None,
         description="ISO-8601 timestamp - 時間旅行查詢; 省略則回傳當前最新狀態",
     ),
+    limit: int = Query(default=20, ge=1, le=100, description="每頁筆數 (max 100, 因內容較長)"),
+    offset: int = Query(default=0, ge=0, description="跳過筆數"),
     session: AsyncSession = Depends(get_session),
 ) -> list[InterpellationRead]:
     temporal_filter = _temporal_filter(Interpellation, as_of)
@@ -54,10 +56,14 @@ async def list_interpellations(
     if keyword is not None:
         stmt = stmt.where(Interpellation.interp_content.ilike(f"%{keyword}%"))
 
-    stmt = stmt.order_by(
-        Interpellation.term,
-        Interpellation.session_period,
-        Interpellation.meeting_times,
+    stmt = (
+        stmt.order_by(
+            Interpellation.session_period,
+            Interpellation.meeting_times,
+            Interpellation.legislator_name,
+        )
+        .limit(limit)
+        .offset(offset)
     )
 
     rows = (await session.execute(stmt)).scalars().all()
