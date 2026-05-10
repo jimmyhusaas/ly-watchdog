@@ -51,6 +51,14 @@ jobs:
       - name: Scrape attendance
         run: uv run python -m scrapers.attendance
 
+      # 委員會成員（~1,300 筆，第10+11屆）
+      - name: Scrape committee memberships
+        run: uv run python -m scrapers.committees
+
+      # 委員問政週報（765 筆，第8屆）
+      - name: Scrape activity reports
+        run: uv run python -m scrapers.activity_reports
+
       - name: Summary
         if: always()
         run: echo "Scrape workflow completed at $(date -u '+%Y-%m-%d %H:%M UTC')"

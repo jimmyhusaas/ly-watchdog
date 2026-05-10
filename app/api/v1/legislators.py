@@ -9,9 +9,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_session
 from app.models.bill import Bill
+from app.models.committee_membership import CommitteeMembership
 from app.models.interpellation import Interpellation
 from app.models.legislator import Legislator
 from app.schemas.bill import BillRead
+from app.schemas.committee_membership import CommitteeMembershipRead
 from app.schemas.interpellation import InterpellationRead
 from app.schemas.legislator import LegislatorDetail, LegislatorRead
 
@@ -182,3 +184,30 @@ async def legislator_speeches(
     )
     rows = (await session.execute(stmt)).scalars().all()
     return [InterpellationRead.model_validate(r) for r in rows]
+
+
+@router.get(
+    "/{name}/committees",
+    response_model=list[CommitteeMembershipRead],
+    summary="立委所屬委員會列表",
+)
+async def legislator_committees(
+    name: str,
+    term: int = Query(description="屆別"),
+    session_period: int | None = Query(default=None, description="會期篩選"),
+    session: AsyncSession = Depends(get_session),
+) -> list[CommitteeMembershipRead]:
+    stmt = select(CommitteeMembership).where(
+        _current_filter(CommitteeMembership),
+        CommitteeMembership.term == term,
+        CommitteeMembership.legislator_name == name,
+    )
+    if session_period is not None:
+        stmt = stmt.where(CommitteeMembership.session_period == session_period)
+
+    stmt = stmt.order_by(
+        CommitteeMembership.session_period,
+        CommitteeMembership.committee,
+    )
+    rows = (await session.execute(stmt)).scalars().all()
+    return [CommitteeMembershipRead.model_validate(r) for r in rows]

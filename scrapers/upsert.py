@@ -6,8 +6,10 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models.activity_report import ActivityReport
 from app.models.attendance import Attendance
 from app.models.bill import Bill
+from app.models.committee_membership import CommitteeMembership
 from app.models.interpellation import Interpellation
 from app.models.legislator import Legislator
 from app.models.vote import Vote
@@ -362,6 +364,142 @@ async def upsert_interpellation(
             meeting_times=meeting_times,
             legislator_name=legislator_name,
             interp_content=interp_content,
+            raw_data=raw,
+            valid_from=existing.valid_from,
+            valid_to=None,
+            recorded_at=now,
+            superseded_at=None,
+        )
+    )
+    return "updated"
+
+
+async def upsert_committee_membership(
+    session: AsyncSession,
+    *,
+    uid: str,
+    term: int,
+    session_period: int,
+    legislator_name: str,
+    committee: str,
+    is_convener: bool,
+    valid_from: datetime,
+    raw: dict[str, Any],
+    now: datetime,
+) -> str:
+    """Append-only bi-temporal write for one committee membership record.
+
+    Returns 'inserted', 'updated', or 'unchanged'.
+    """
+    stmt = select(CommitteeMembership).where(
+        CommitteeMembership.committee_uid == uid,
+        CommitteeMembership.superseded_at.is_(None),
+        CommitteeMembership.valid_to.is_(None),
+    )
+    existing: CommitteeMembership | None = (await session.execute(stmt)).scalar_one_or_none()
+
+    if existing is None:
+        session.add(
+            CommitteeMembership(
+                committee_uid=uid,
+                term=term,
+                session_period=session_period,
+                legislator_name=legislator_name,
+                committee=committee,
+                is_convener=is_convener,
+                raw_data=raw,
+                valid_from=valid_from,
+                valid_to=None,
+                recorded_at=now,
+                superseded_at=None,
+            )
+        )
+        return "inserted"
+
+    if existing.is_convener == is_convener:
+        return "unchanged"
+
+    # Convener status changed -- supersede old row, insert new
+    existing.superseded_at = now
+    session.add(
+        CommitteeMembership(
+            committee_uid=uid,
+            term=term,
+            session_period=session_period,
+            legislator_name=legislator_name,
+            committee=committee,
+            is_convener=is_convener,
+            raw_data=raw,
+            valid_from=existing.valid_from,
+            valid_to=None,
+            recorded_at=now,
+            superseded_at=None,
+        )
+    )
+    return "updated"
+
+
+async def upsert_activity_report(
+    session: AsyncSession,
+    *,
+    uid: str,
+    term: int,
+    session_period: int,
+    lgno: str,
+    legislator_name: str,
+    subject: str,
+    content: str,
+    published_at: datetime,
+    valid_from: datetime,
+    raw: dict[str, Any],
+    now: datetime,
+) -> str:
+    """Append-only bi-temporal write for one activity report.
+
+    Returns 'inserted', 'updated', or 'unchanged'.
+    """
+    stmt = select(ActivityReport).where(
+        ActivityReport.activity_uid == uid,
+        ActivityReport.superseded_at.is_(None),
+        ActivityReport.valid_to.is_(None),
+    )
+    existing: ActivityReport | None = (await session.execute(stmt)).scalar_one_or_none()
+
+    if existing is None:
+        session.add(
+            ActivityReport(
+                activity_uid=uid,
+                term=term,
+                session_period=session_period,
+                lgno=lgno,
+                legislator_name=legislator_name,
+                subject=subject,
+                content=content,
+                published_at=published_at,
+                raw_data=raw,
+                valid_from=valid_from,
+                valid_to=None,
+                recorded_at=now,
+                superseded_at=None,
+            )
+        )
+        return "inserted"
+
+    if existing.content == content:
+        return "unchanged"
+
+    # Content corrected -- supersede old row, insert new
+    existing.superseded_at = now
+    session.add(
+        ActivityReport(
+            activity_uid=uid,
+            term=term,
+            session_period=session_period,
+            lgno=lgno,
+            legislator_name=legislator_name,
+            subject=subject,
+            content=content,
+            published_at=published_at,
             raw_data=raw,
             valid_from=existing.valid_from,
             valid_to=None,

@@ -59,6 +59,8 @@ async def clean_db() -> AsyncIterator[None]:
 
     factory = _make_session_factory()
     async with factory() as session, session.begin():
+        await session.execute(text("DELETE FROM activity_reports"))
+        await session.execute(text("DELETE FROM committee_memberships"))
         await session.execute(text("DELETE FROM interpellations"))
         await session.execute(text("DELETE FROM bills"))
         await session.execute(text("DELETE FROM votes"))
