@@ -1,0 +1,84 @@
+{
+  "dataList": [
+    {
+      "isCoChairman": "N",
+      "committee": "外交及國防委員會",
+      "term": "11",
+      "lgno": "00110",
+      "name": "羅美玲",
+      "sessionPeriod": "1"
+    },
+    {
+      "isCoChairman": "N",
+      "committee": "外交及國防委員會",
+      "term": "11",
+      "lgno": "00035",
+      "name": "林憶君",
+      "sessionPeriod": "1"
+    },
+    {
+      "isCoChairman": "N",
+      "committee": "外交及國防委員會",
+      "term": "11",
+      "lgno": "00042",
+      "name": "洪申翰",
+      "sessionPeriod": "1"
+    },
+    {
+      "isCoChairman": "N",
+      "committee": "教育及文化委員會",
+      "term": "11",
+      "lgno": "00011",
+      "name": "吳沛憶",
+      "sessionPeriod": "1"
+    },
+    {
+      "isCoChairman": "N",
+      "committee": "教育及文化委員會",
+      "term": "11",
+      "lgno": "00015",
+      "name": "吳春城",
+      "sessionPeriod": "1"
+    },
+    {
+      "isCoChairman": "Y",
+      "committee": "教育及文化委員會",
+      "term": "11",
+      "lgno": "00026",
+      "name": "林宜瑾",
+      "sessionPeriod": "1"
+    },
+    {
+      "isCoChairman": "N",
+      "committee": "教育及文化委員會",
+      "term": "11",
+      "lgno": "00030",
+      "name": "林倩綺",
+      "sessionPeriod": "1"
+    },
+    {
+      "isCoChairman": "Y",
+      "committee": "教育及文化委員會",
+      "term": "11",
+      "lgno": "00040",
+      "name": "柯志恩",
+      "sessionPeriod": "1"
+    },
+    {
+      "isCoChairman": "N",
+      "committee": "教育及文化委員會",
+      "term": "11",
+      "lgno": "00043",
+      "name": "洪孟楷",
+      "sessionPeriod": "1"
+    },
+    {
+      "isCoChairman": "N",
+      "committee": "教育及文化委員會",
+      "term": "11",
+      "lgno": "00044",
+      "name": "范雲",
+      "sessionPeriod": "1"
+    }
+  ]
+}
