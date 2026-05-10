@@ -9,6 +9,7 @@ from app.api.v1 import (
     committees,
     interpellations,
     legislators,
+    search,
     votes,
 )
 
@@ -20,3 +21,4 @@ api_router.include_router(bills.router)
 api_router.include_router(interpellations.router)
 api_router.include_router(committees.router)
 api_router.include_router(activity_reports.router)
+api_router.include_router(search.router)
