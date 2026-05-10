@@ -12,8 +12,12 @@ from scrapers.upsert import upsert_interpellation
 
 
 def test_interp_uid() -> None:
-    uid = _interp_uid(11, 1, 1, "柯建銘")
-    assert uid == "11_1_1_柯建銘"
+    import hashlib
+
+    content = "質詢內容測試"
+    expected_hash = hashlib.md5(content[:500].encode()).hexdigest()[:8]
+    uid = _interp_uid(11, 1, "01", "柯建銘", content)
+    assert uid == f"11_1_01_柯建銘_{expected_hash}"
 
 
 def test_fixture_loads() -> None:
