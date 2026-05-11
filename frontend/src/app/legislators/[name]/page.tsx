@@ -30,11 +30,21 @@ export default async function LegislatorDetailPage({ params, searchParams }: Pro
     notFound()
   }
 
-  const [bills, speeches, committees] = await Promise.all([
+  const [bills, speeches, rawCommittees] = await Promise.all([
     getLegislatorBills(decodedName, { term, limit: 50 }).catch(() => []),
     getLegislatorSpeeches(decodedName, { term, limit: 20 }).catch(() => []),
     getLegislatorCommittees(decodedName, { term }).catch(() => []),
   ])
+
+  // Deduplicate committee names — if any session made them convener, show convener badge
+  const committeeMap = new Map<string, boolean>()
+  for (const c of rawCommittees) {
+    committeeMap.set(c.committee, (committeeMap.get(c.committee) ?? false) || c.is_convener)
+  }
+  const committees = Array.from(committeeMap.entries()).map(([committee, is_convener]) => ({
+    committee,
+    is_convener,
+  }))
 
   return (
     <div className="space-y-6">
@@ -70,7 +80,7 @@ export default async function LegislatorDetailPage({ params, searchParams }: Pro
           <div className="flex gap-2 flex-wrap mt-4 pt-4 border-t">
             {committees.map(c => (
               <span
-                key={c.id}
+                key={c.committee}
                 className={`text-xs px-2.5 py-1 rounded-full border ${c.is_convener ? 'bg-amber-50 border-amber-200 text-amber-800 font-medium' : 'bg-slate-50 border-slate-200 text-slate-600'}`}
               >
                 {c.is_convener ? '★ ' : ''}{c.committee}
