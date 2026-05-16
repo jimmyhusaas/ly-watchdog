@@ -7,7 +7,8 @@ services:
     plan: free
     region: oregon
     healthCheckPath: /health
-    dockerPort: 8000
     envVars:
       - key: DATABASE_URL
         sync: false
+      - key: PORT
+        value: "8000"
