@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Search, FileText, Mic, User } from 'lucide-react'
+import { Search, FileText, Mic, User, ExternalLink } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -111,6 +111,14 @@ export default function SearchPage() {
                     {r.highlight && r.highlight !== r.bill_name && (
                       <p className="text-xs text-slate-400 mt-1 line-clamp-2">{r.highlight}</p>
                     )}
+                    <a
+                      href={`https://lis.ly.gov.tw/lislgmeetc/lgmeetkm?MEHF11^${r.bill_no}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-xs text-blue-500 hover:underline mt-1"
+                    >
+                      立院資料來源 <ExternalLink className="w-3 h-3" />
+                    </a>
                   </div>
                   <span className="text-xs bg-slate-100 text-slate-600 rounded px-2 py-1 whitespace-nowrap shrink-0">
                     {r.bill_status}
