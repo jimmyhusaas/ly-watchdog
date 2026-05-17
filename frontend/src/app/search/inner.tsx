@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Search, FileText, Mic, User, ExternalLink } from 'lucide-react'
+import { Search, FileText, Mic, User, ExternalLink, Loader2 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -55,13 +55,20 @@ export default function SearchPage() {
           placeholder="搜尋關鍵字…"
           className="flex-1 h-10"
         />
-        <Button type="submit" className="h-10 px-5">
-          <Search className="w-4 h-4 mr-1" />搜尋
+        <Button type="submit" disabled={loading} className="h-10 px-5">
+          {loading
+            ? <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+            : <Search className="w-4 h-4 mr-1" />}
+          {loading ? '搜尋中…' : '搜尋'}
         </Button>
       </form>
 
       {loading && (
         <div className="space-y-3">
+          <div className="flex items-center gap-2 text-slate-500 text-sm">
+            <Loader2 className="w-4 h-4 animate-spin" />
+            <span>搜尋中，請稍候…</span>
+          </div>
           {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-16 w-full rounded-lg" />)}
         </div>
       )}
