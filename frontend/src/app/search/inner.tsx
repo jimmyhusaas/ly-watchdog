@@ -112,7 +112,7 @@ export default function SearchPage() {
                       <p className="text-xs text-slate-400 mt-1 line-clamp-2">{r.highlight}</p>
                     )}
                     <a
-                      href={`https://lis.ly.gov.tw/lislgmeetc/lgmeetkm?MEHF11^${r.bill_no}`}
+                      href="https://data.ly.gov.tw/getds.action?id=20"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-1 text-xs text-blue-500 hover:underline mt-1"

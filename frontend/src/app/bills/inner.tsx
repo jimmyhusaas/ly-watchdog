@@ -102,7 +102,7 @@ export default function BillsPage() {
                   {bill.bill_proposer && ` · ${bill.bill_proposer.slice(0, 40)}${(bill.bill_proposer?.length ?? 0) > 40 ? '…' : ''}`}
                 </p>
                 <a
-                  href={`https://lis.ly.gov.tw/lislgmeetc/lgmeetkm?MEHF11^${bill.bill_no}`}
+                  href="https://data.ly.gov.tw/getds.action?id=20"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1 text-xs text-blue-500 hover:underline mt-1"
