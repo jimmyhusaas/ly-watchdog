@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import { ExternalLink } from 'lucide-react'
 import {
   getLegislator,
   getLegislatorBills,
@@ -59,6 +60,14 @@ export default async function LegislatorDetailPage({ params, searchParams }: Pro
             <p className="text-slate-500">
               {legislator.district ?? '不分區'} · 第{legislator.term}屆
             </p>
+            <a
+              href={`https://www.ly.gov.tw/Pages/List.aspx?nodeid=109`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-xs text-blue-500 hover:underline mt-1"
+            >
+              立法院官方資料 <ExternalLink className="w-3 h-3" />
+            </a>
           </div>
           <div className="flex gap-6 text-center">
             <div>

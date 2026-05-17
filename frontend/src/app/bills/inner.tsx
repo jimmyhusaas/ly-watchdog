@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
-import { Search } from 'lucide-react'
+import { Search, ExternalLink } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -101,6 +101,14 @@ export default function BillsPage() {
                   {bill.bill_no} · 第{bill.session_period}會期
                   {bill.bill_proposer && ` · ${bill.bill_proposer.slice(0, 40)}${(bill.bill_proposer?.length ?? 0) > 40 ? '…' : ''}`}
                 </p>
+                <a
+                  href={`https://lis.ly.gov.tw/lglawc/lglawkm?LSCCD11^${bill.bill_no}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-xs text-blue-500 hover:underline mt-1"
+                >
+                  立院資料來源 <ExternalLink className="w-3 h-3" />
+                </a>
               </div>
               <span className={`text-xs rounded px-2 py-1 shrink-0 whitespace-nowrap ${billStatusColor(bill.bill_status)}`}>
                 {bill.bill_status}
