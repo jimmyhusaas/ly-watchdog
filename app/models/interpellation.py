@@ -63,9 +63,10 @@ class Interpellation(Base):
 
     __table_args__ = (
         Index(
-            "ix_interps_current",
+            "ux_interpellations_interp_uid_current",
             "interp_uid",
-            postgresql_where="superseded_at IS NULL",
+            unique=True,
+            postgresql_where="superseded_at IS NULL AND valid_to IS NULL",
         ),
         Index("ix_interps_term_session", "term", "session_period"),
         Index("ix_interps_legislator", "legislator_name"),

@@ -70,9 +70,10 @@ class Attendance(Base):
 
     __table_args__ = (
         Index(
-            "ix_attendance_current",
+            "ux_attendance_attendance_uid_current",
             "attendance_uid",
-            postgresql_where="superseded_at IS NULL",
+            unique=True,
+            postgresql_where="superseded_at IS NULL AND valid_to IS NULL",
         ),
         Index("ix_attendance_legislator", "legislator_uid"),
         Index("ix_attendance_term_session", "term", "session_period"),

@@ -76,9 +76,10 @@ class Legislator(Base):
     __table_args__ = (
         # Fast "current state" queries
         Index(
-            "ix_legislators_current",
+            "ux_legislators_legislator_uid_current",
             "legislator_uid",
-            postgresql_where="superseded_at IS NULL",
+            unique=True,
+            postgresql_where="superseded_at IS NULL AND valid_to IS NULL",
         ),
         # Fast "as-of" queries
         Index("ix_legislators_uid_valid", "legislator_uid", "valid_from"),
