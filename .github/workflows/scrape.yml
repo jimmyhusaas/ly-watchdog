@@ -35,6 +35,9 @@ jobs:
           uv venv
           uv pip install -e ".[dev]"
 
+      - name: Run migrations
+        run: uv run alembic upgrade head
+
       # 立委基本資料（快，243 筆）
       - name: Scrape legislators
         run: uv run python -m scrapers.legislators
