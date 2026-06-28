@@ -14,7 +14,7 @@ jobs:
   scrape:
     name: Run all scrapers → Neon
     runs-on: ubuntu-latest
-    timeout-minutes: 45 # bills 需要約 15 分鐘下載 35 頁
+    timeout-minutes: 90 # bills 實際約需 40+ 分鐘下載 35 頁（上游 API 變慢，放寬並排到最後）
 
     env:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
@@ -46,10 +46,6 @@ jobs:
       - name: Scrape interpellations
         run: uv run python -m scrapers.interpellations
 
-      # 法案（慢，需下載 35 頁共 34,000+ 筆）
-      - name: Scrape bills
-        run: uv run python -m scrapers.bills
-
       # 出席紀錄（目前 API 未公開，0 筆，快速完成）
       - name: Scrape attendance
         run: uv run python -m scrapers.attendance
@@ -61,6 +57,11 @@ jobs:
       # 委員問政週報（765 筆，第8屆）
       - name: Scrape activity reports
         run: uv run python -m scrapers.activity_reports
+
+      # 法案（慢，目前抓全部屆別共 35 頁、34,000+ 筆後才在本地篩出第10+11屆）
+      # 排最後執行：就算這步逾時被取消，前面其他 scraper 的資料仍已寫入
+      - name: Scrape bills
+        run: uv run python -m scrapers.bills
 
       - name: Summary
         if: always()
