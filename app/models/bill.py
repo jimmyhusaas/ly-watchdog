@@ -66,9 +66,10 @@ class Bill(Base):
 
     __table_args__ = (
         Index(
-            "ix_bills_current",
+            "ux_bills_bill_uid_current",
             "bill_uid",
-            postgresql_where="superseded_at IS NULL",
+            unique=True,
+            postgresql_where="superseded_at IS NULL AND valid_to IS NULL",
         ),
         Index("ix_bills_term_session", "term", "session_period"),
         Index("ix_bills_status", "bill_status"),

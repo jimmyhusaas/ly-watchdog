@@ -15,6 +15,36 @@ from app.models.legislator import Legislator
 from app.models.vote import Vote
 
 
+async def _get_current(
+    session: AsyncSession,
+    model: type[Any],
+    uid_column: Any,
+    uid: str,
+    now: datetime,
+) -> Any | None:
+    """Fetch the single current (non-superseded) row for a natural key.
+
+    Each upsert is supposed to leave at most one row per natural key with
+    superseded_at/valid_to both NULL. If more than one is found — e.g. from a
+    historical scraper bug that wrote duplicates before this uid was touched
+    again — keep the most recently recorded row and supersede the rest, so
+    the table self-heals on the next write instead of raising
+    MultipleResultsFound.
+    """
+    stmt = (
+        select(model)
+        .where(uid_column == uid, model.superseded_at.is_(None), model.valid_to.is_(None))
+        .order_by(model.recorded_at.desc())
+    )
+    rows = list((await session.execute(stmt)).scalars().all())
+    if not rows:
+        return None
+    current, *stale_duplicates = rows
+    for dup in stale_duplicates:
+        dup.superseded_at = now
+    return current
+
+
 async def upsert_legislator(
     session: AsyncSession,
     *,
@@ -31,12 +61,9 @@ async def upsert_legislator(
 
     Returns 'inserted', 'updated', or 'unchanged'.
     """
-    stmt = select(Legislator).where(
-        Legislator.legislator_uid == uid,
-        Legislator.superseded_at.is_(None),
-        Legislator.valid_to.is_(None),
+    existing: Legislator | None = await _get_current(
+        session, Legislator, Legislator.legislator_uid, uid, now
     )
-    existing: Legislator | None = (await session.execute(stmt)).scalar_one_or_none()
 
     if existing is None:
         session.add(
@@ -99,12 +126,9 @@ async def upsert_attendance(
 
     Returns 'inserted', 'updated', or 'unchanged'.
     """
-    stmt = select(Attendance).where(
-        Attendance.attendance_uid == uid,
-        Attendance.superseded_at.is_(None),
-        Attendance.valid_to.is_(None),
+    existing: Attendance | None = await _get_current(
+        session, Attendance, Attendance.attendance_uid, uid, now
     )
-    existing: Attendance | None = (await session.execute(stmt)).scalar_one_or_none()
 
     if existing is None:
         session.add(
@@ -177,12 +201,7 @@ async def upsert_vote(
 
     Returns 'inserted', 'updated', or 'unchanged'.
     """
-    stmt = select(Vote).where(
-        Vote.vote_uid == uid,
-        Vote.superseded_at.is_(None),
-        Vote.valid_to.is_(None),
-    )
-    existing: Vote | None = (await session.execute(stmt)).scalar_one_or_none()
+    existing: Vote | None = await _get_current(session, Vote, Vote.vote_uid, uid, now)
 
     if existing is None:
         session.add(
@@ -255,12 +274,7 @@ async def upsert_bill(
 
     Returns 'inserted', 'updated', or 'unchanged'.
     """
-    stmt = select(Bill).where(
-        Bill.bill_uid == uid,
-        Bill.superseded_at.is_(None),
-        Bill.valid_to.is_(None),
-    )
-    existing: Bill | None = (await session.execute(stmt)).scalar_one_or_none()
+    existing: Bill | None = await _get_current(session, Bill, Bill.bill_uid, uid, now)
 
     if existing is None:
         session.add(
@@ -326,12 +340,9 @@ async def upsert_interpellation(
 
     Returns 'inserted', 'updated', or 'unchanged'.
     """
-    stmt = select(Interpellation).where(
-        Interpellation.interp_uid == uid,
-        Interpellation.superseded_at.is_(None),
-        Interpellation.valid_to.is_(None),
+    existing: Interpellation | None = await _get_current(
+        session, Interpellation, Interpellation.interp_uid, uid, now
     )
-    existing: Interpellation | None = (await session.execute(stmt)).scalar_one_or_none()
 
     if existing is None:
         session.add(
@@ -391,12 +402,9 @@ async def upsert_committee_membership(
 
     Returns 'inserted', 'updated', or 'unchanged'.
     """
-    stmt = select(CommitteeMembership).where(
-        CommitteeMembership.committee_uid == uid,
-        CommitteeMembership.superseded_at.is_(None),
-        CommitteeMembership.valid_to.is_(None),
+    existing: CommitteeMembership | None = await _get_current(
+        session, CommitteeMembership, CommitteeMembership.committee_uid, uid, now
     )
-    existing: CommitteeMembership | None = (await session.execute(stmt)).scalar_one_or_none()
 
     if existing is None:
         session.add(
@@ -458,12 +466,9 @@ async def upsert_activity_report(
 
     Returns 'inserted', 'updated', or 'unchanged'.
     """
-    stmt = select(ActivityReport).where(
-        ActivityReport.activity_uid == uid,
-        ActivityReport.superseded_at.is_(None),
-        ActivityReport.valid_to.is_(None),
+    existing: ActivityReport | None = await _get_current(
+        session, ActivityReport, ActivityReport.activity_uid, uid, now
     )
-    existing: ActivityReport | None = (await session.execute(stmt)).scalar_one_or_none()
 
     if existing is None:
         session.add(

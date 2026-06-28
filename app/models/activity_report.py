@@ -65,9 +65,10 @@ class ActivityReport(Base):
 
     __table_args__ = (
         Index(
-            "ix_activity_current",
+            "ux_activity_reports_activity_uid_current",
             "activity_uid",
-            postgresql_where="superseded_at IS NULL",
+            unique=True,
+            postgresql_where="superseded_at IS NULL AND valid_to IS NULL",
         ),
         Index("ix_activity_term", "term"),
         Index("ix_activity_legislator", "legislator_name"),

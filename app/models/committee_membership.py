@@ -63,9 +63,10 @@ class CommitteeMembership(Base):
 
     __table_args__ = (
         Index(
-            "ix_committees_current",
+            "ux_committee_memberships_committee_uid_current",
             "committee_uid",
-            postgresql_where="superseded_at IS NULL",
+            unique=True,
+            postgresql_where="superseded_at IS NULL AND valid_to IS NULL",
         ),
         Index("ix_committees_term_session", "term", "session_period"),
         Index("ix_committees_legislator", "legislator_name"),

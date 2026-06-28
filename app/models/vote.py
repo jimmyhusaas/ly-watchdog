@@ -71,9 +71,10 @@ class Vote(Base):
 
     __table_args__ = (
         Index(
-            "ix_votes_current",
+            "ux_votes_vote_uid_current",
             "vote_uid",
-            postgresql_where="superseded_at IS NULL",
+            unique=True,
+            postgresql_where="superseded_at IS NULL AND valid_to IS NULL",
         ),
         Index("ix_votes_term_session", "term", "session_period"),
         Index("ix_votes_legislator", "legislator_name"),
