@@ -157,22 +157,27 @@ async def run(use_fixture: bool = False) -> dict[str, int]:
 
             uid = _bill_uid(term, sp, bill_no)
 
-            result = await upsert_bill(
-                session,
-                uid=uid,
-                term=term,
-                session_period=sp,
-                bill_no=bill_no,
-                bill_name=(row.get("billName") or "").strip(),
-                bill_org=(row.get("billOrg") or "").strip() or None,
-                bill_proposer=(row.get("billProposer") or "").strip() or None,
-                bill_cosignatory=(row.get("billCosignatory") or "").strip() or None,
-                bill_status=bill_status,
-                valid_from=now,
-                raw=row,
-                now=now,
-            )
-            stats[result] += 1
+            async with session.begin_nested():
+                try:
+                    result = await upsert_bill(
+                        session,
+                        uid=uid,
+                        term=term,
+                        session_period=sp,
+                        bill_no=bill_no,
+                        bill_name=(row.get("billName") or "").strip(),
+                        bill_org=(row.get("billOrg") or "").strip() or None,
+                        bill_proposer=(row.get("billProposer") or "").strip() or None,
+                        bill_cosignatory=(row.get("billCosignatory") or "").strip() or None,
+                        bill_status=bill_status,
+                        valid_from=now,
+                        raw=row,
+                        now=now,
+                    )
+                    stats[result] += 1
+                except Exception:
+                    log.exception("Failed to upsert bill uid=%s", uid)
+                    stats["errors"] += 1
 
     log.info("Scrape complete: %s", stats)
     return stats

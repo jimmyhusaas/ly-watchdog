@@ -16,7 +16,7 @@ from datetime import datetime
 from typing import Any
 from uuid import UUID, uuid4
 
-from sqlalchemy import DateTime, Index, Integer, String, Text, func
+from sqlalchemy import DateTime, Index, Integer, Text, func
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column
@@ -35,19 +35,19 @@ class Bill(Base):
     )
 
     # --- Natural business key ---
-    bill_uid: Mapped[str] = mapped_column(String(512), nullable=False)
+    bill_uid: Mapped[str] = mapped_column(Text, nullable=False)
 
     # --- Bill context ---
     term: Mapped[int] = mapped_column(Integer, nullable=False)
     session_period: Mapped[int] = mapped_column(Integer, nullable=False)
-    bill_no: Mapped[str] = mapped_column(String(128), nullable=False)
+    bill_no: Mapped[str] = mapped_column(Text, nullable=False)
     bill_name: Mapped[str] = mapped_column(Text, nullable=False)
-    bill_org: Mapped[str | None] = mapped_column(String(256), nullable=True)
+    bill_org: Mapped[str | None] = mapped_column(Text, nullable=True)
     bill_proposer: Mapped[str | None] = mapped_column(Text, nullable=True)
     bill_cosignatory: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # --- Status (the field that changes over time) ---
-    bill_status: Mapped[str] = mapped_column(String(128), nullable=False)
+    bill_status: Mapped[str] = mapped_column(Text, nullable=False)
 
     # --- Original payload ---
     raw_data: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
